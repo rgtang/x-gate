@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/* ── Terminal palette injected as CSS custom props ── */
+:root {
+  --c-bg: #050505;
+  --c-surface: #080808;
+  --c-border: #0d2d0d;
+  --c-border-bright: #1a4a1a;
+  --c-green: #4ade80;
+  --c-green-bright: #00ff41;
+  --c-green-dim: #166534;
+  --c-green-muted: #0d2d0d;
+  --c-red: #f87171;
+  --c-yellow: #fbbf24;
+  --c-cyan: #22d3ee;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* JetBrains Mono loaded via next/font — fallback chain for SSR flash */
+  font-family: "JetBrains Mono", "Fira Code", "Source Code Pro",
+    "Cascadia Code", ui-monospace, "Courier New", monospace;
+  font-size: 14px;
+  background-color: var(--c-bg);
+  color: var(--c-green);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Thin, terminal-style scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+  background: var(--c-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--c-border-bright);
+  border-radius: 0;
+}
+
+/* Selection */
+::selection {
+  background: var(--c-green-dim);
+  color: var(--c-green-bright);
+}
