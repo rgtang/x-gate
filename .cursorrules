@@ -1,0 +1,20 @@
+# X-Gate · On-Chain Micropayment API Gateway
+
+# Project Context
+项目名: xGate
+One-liner: 给任意API做付费网关
+方向: AI 支付 
+
+核心场景:
+- 用户角色: 持有API的公司
+- 痛点: 可能被爬虫随意攻击
+- AI Agent 的动作: 无
+- 关键链上动作: 链上支付验证
+- 演示视频的魔法时刻: /
+
+本周（Week 2）进度计划:
+- D1 框架搭建
+- D2 最小可跑闭环，跑通本地 + idea 验证
+- D3 链上支付
+- D4 验证链上
+- D5 实时仪表盘
