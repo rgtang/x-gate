@@ -1,13 +1,14 @@
 # X-Gate · On-Chain Micropayment API Gateway
 
-> **AI×Web3 Hackathon** — Intercept every HTTP request like Cloudflare, demand
-> USDC micropayments via the x402 protocol, record receipts, and stream live
-> traffic analytics to a terminal-aesthetic web dashboard.
+> **AI×Web3 Hackathon** — Cloudflare-like API gateway with x402 micropayments,
+> an AI agent that decides pay/skip, on-chain receipts, and a live dashboard.
 
 ```
-Client ──▶ :8402 Gateway ──── verify x402 payment ──▶ Upstream (httpbin.org)
-                │
-                └──▶ :8403 Admin API ──▶ :3000 Web Dashboard (SSE)
+Agent (LLM) ──pay──▶ :8402 Gateway ──▶ Upstream
+     │                      │
+     └── receipt ──▶ PaymentReceipt.sol
+                            │
+                     :8403 ──▶ Web Dashboard (SSE)
 ```
 
 ---
@@ -18,133 +19,126 @@ Client ──▶ :8402 Gateway ──── verify x402 payment ──▶ Upstre
 
 ```bash
 cd gateway
-cp .env.example .env        # fill in GATEWAY_WALLET etc.
+cp .env.example .env
 npm install
-npm run dev                 # proxy :8402, admin :8403
+npm run dev                 # :8402 proxy + :8403 admin
 ```
 
 ### 2 · Web Dashboard
 
 ```bash
 cd web
+cp .env.local.example .env.local   # set GATEWAY_ADMIN_URL + contract for Audit tab
 npm install
 npm run dev                 # http://localhost:3000
 ```
 
-### 3 · Demo (gateway must be running)
+- **`/`** — landing page (how it works + demo commands)
+- **`/dashboard`** — two tabs in one view:
+  - **Gateway Live** — SSE from gateway admin (`/stats`, `/logs`)
+  - **On-Chain Audit** — `PaymentReceipt` events from Base Sepolia (pay + skip)
+
+### 3 · Agent Scenarios (gateway must be running)
 
 ```bash
-cd gateway
-npm run demo
-# Sends 10 requests — 5 with fake X-Payment header, 5 without.
-# Watch the dashboard update in real time.
+cd agent
+cp .env.example .env        # LLM_API_KEY required; PAYMENT_RECEIPT_ADDRESS optional
+npm install
+npm run scenarios           # 5 LLM cases — pay vs skip
+npm run scenarios -- --case=1   # run single case
+```
+
+### 4 · Mechanical demo (no LLM)
+
+```bash
+cd gateway && npm run demo  # 10 requests, 5 with fake X-Payment
 ```
 
 ---
 
-## How It Works
+## Agent Scenarios (5 cases)
 
-### x402 Payment Flow
+| # | Name | Expected | Rule tested |
+|---|------|----------|-------------|
+| 1 | `high-value-first-call` | **pay** | Clear intent + budget OK |
+| 2 | `hourly-limit-hit` | **skip** | `callsThisHour >= maxCallsPerHour` |
+| 3 | `budget-nearly-empty` | **skip** | `remainingDailyUSDC < 0.05` |
+| 4 | `duplicate-within-cooldown` | **skip** | Same URL paid within `cooldownSec` |
+| 5 | `intent-path-mismatch` | **skip** | Intent doesn't match API path |
 
-```
-1. Client  →  GET /api/data
-2. Gateway →  402 Payment Required  (JSON with payTo, amount, USDC address)
-3. Client  →  Send USDC on-chain to GATEWAY_WALLET
-4. Client  →  GET /api/data  +  X-Payment: 0x<txHash>
-5. Gateway →  verifyPayment(txHash)  ✓
-6. Gateway →  proxy to upstream, return response
-```
+**Demo mode (1-B):** LLM calls are real; gateway calls use stub `X-Payment` header (no USDC needed).
 
-### 402 Response Body (Coinbase x402 Spec)
-
-```json
-{
-  "version": "1",
-  "accepts": [{
-    "scheme": "exact",
-    "network": "base-sepolia",
-    "maxAmountRequired": "1000",
-    "resource": "http://localhost:8402/api/data",
-    "description": "Standard API endpoint",
-    "mimeType": "application/json",
-    "payTo": "0x<GATEWAY_WALLET>",
-    "maxTimeoutSeconds": 300,
-    "asset": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-    "extra": { "name": "USD Coin", "decimals": 6 }
-  }]
-}
-```
-
----
-
-## Pricing Rules
-
-| Path Pattern       | Price (USDC) | Description                   |
-|--------------------|--------------|-------------------------------|
-| `/api/premium/**`  | $0.01        | Premium analytics endpoint    |
-| `/api/**`          | $0.001       | Standard API endpoint         |
-| `/bypass`          | FREE         | Demo bypass — no payment      |
-| `/health`          | FREE         | Health check                  |
+**On-chain (2-B):** Every pay/skip decision calls `issueReceipt()` when `PAYMENT_RECEIPT_ADDRESS` is set.
 
 ---
 
 ## Packages
 
-| Package   | Port | Tech                                      |
-|-----------|------|-------------------------------------------|
-| `gateway` | 8402 | Node.js · TypeScript · tsx · viem         |
-| `gateway` | 8403 | Admin API (`/stats`, `/logs`)             |
-| `web`     | 3000 | Next.js 15 · Tailwind v4 · recharts       |
+| Package | Port | Role |
+|---------|------|------|
+| `gateway` | 8402 | x402 reverse proxy |
+| `gateway` | 8403 | Admin `/stats`, `/logs` |
+| `web` | 3000 | Landing + dual-tab dashboard (SSE + chain audit) |
+| `agent` | — | LLM scenario runner (outbound client) |
 
 ---
 
 ## Environment Variables
 
-### `gateway/.env` (copy from `.env.example`)
+### `gateway/.env`
 
-| Key                  | Description                                   |
-|----------------------|-----------------------------------------------|
-| `UPSTREAM_URL`       | Target service to proxy (default: httpbin.org)|
-| `RPC_URL`            | Base Sepolia RPC endpoint                     |
-| `GATEWAY_WALLET`     | Your testnet wallet address (payTo)           |
-| `GATEWAY_PRIVATE_KEY`| Testnet private key — **never mainnet**       |
-| `USDC_ADDRESS`       | Base Sepolia USDC contract address            |
-| `PROXY_PORT`         | Proxy server port (default: 8402)             |
-| `ADMIN_PORT`         | Admin API port (default: 8403)                |
+| Key | Description |
+|-----|-------------|
+| `UPSTREAM_URL` | Upstream API (default: httpbin.org) |
+| `GATEWAY_WALLET` | payTo address in 402 responses |
+| `PROXY_PORT` / `ADMIN_PORT` | 8402 / 8403 |
 
-### `web/.env.local` (copy from `.env.local.example`)
+### `agent/.env`
 
-| Key                  | Description                                   |
-|----------------------|-----------------------------------------------|
-| `GATEWAY_ADMIN_URL`  | Gateway admin URL (default: http://localhost:8403) |
+| Key | Description |
+|-----|-------------|
+| `LLM_API_KEY` | **Required** for scenarios |
+| `LLM_BASE_URL` | Default: DeepSeek |
+| `GATEWAY_BASE_URL` | Default: `http://localhost:8402` |
+| `AGENT_DEMO_MODE` | `stub` (default) — fake X-Payment |
+| `WALLET_PRIVATE_KEY` | Testnet — writes PaymentReceipt |
+| `PAYMENT_RECEIPT_ADDRESS` | Deployed `PaymentReceipt.sol` |
+| `PAYEE_ADDRESS` | Gateway wallet (receipt payee on pay) |
+
+### `web/.env.local`
+
+| Key | Description |
+|-----|-------------|
+| `GATEWAY_ADMIN_URL` | Gateway admin for SSE proxy (default `http://localhost:8403`; use `8413` if ports conflict) |
+| `NEXT_PUBLIC_GATEWAY_ADMIN_URL` | Shown in Live tab UI |
+| `NEXT_PUBLIC_CONTRACT_ADDRESS` | Deployed `PaymentReceipt.sol` — required for Audit tab |
+| `NEXT_PUBLIC_AGENT_ADDRESS` | Agent wallet — filters receipts by payer (optional) |
+| `NEXT_PUBLIC_DEPLOY_BLOCK` | Contract deploy block — speeds up log scan (optional) |
+| `NEXT_PUBLIC_BASE_SEPOLIA_RPC` | RPC URL (default: public Base Sepolia) |
+| `NEXT_PUBLIC_EXPLORER_URL` | Basescan link prefix (default: sepolia.basescan.org) |
 
 ---
 
-## Architecture Notes
+## Contracts (Remix deploy, not in build)
 
-- **No database** — `store.ts` uses a single in-memory `Map` (max 1000 entries).
-  Data resets on process restart. Perfectly fine for a hackathon demo.
-- **Stub verifier** — `verifier.ts` accepts any `0x...` header and logs
-  `[verifier] STUB — skipping on-chain check`. Replace with real viem
-  `getTransactionReceipt` logic once you have a funded testnet wallet.
-- **Process resilience** — all upstream/RPC calls are wrapped in try/catch with
-  one retry; the gateway process never crashes on network errors.
-- **MockUSDC.sol** — deploy via Remix IDE on Base Sepolia for local testing.
-  Anyone can `mint()` tokens to themselves.
+| File | Purpose |
+|------|---------|
+| `contracts/MockUSDC.sol` | Testnet USDC for manual testing |
+| `contracts/PaymentReceipt.sol` | Agent decision audit trail |
+
+After deploy, set `PAYMENT_RECEIPT_ADDRESS` in `agent/.env`.
 
 ---
 
-## Commands Reference
+## Commands
 
 ```bash
 # Gateway
-npm run dev        # tsx watch mode — hot reload
-npm run start      # production start
-npm run demo       # fire 10 demo requests
-npm run typecheck  # tsc --noEmit
+npm run dev | start | demo | typecheck
+
+# Agent
+npm run scenarios | dev | typecheck
 
 # Web
-npm run dev        # Next.js dev server
-npm run build      # production build
-npm run typecheck  # tsc --noEmit
+npm run dev | build | typecheck
 ```

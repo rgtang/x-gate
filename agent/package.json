@@ -1,0 +1,20 @@
+{
+  "name": "x-gate-agent",
+  "version": "1.0.0",
+  "description": "AI payment agent — LLM decides pay/skip, calls x-gate gateway",
+  "scripts": {
+    "dev": "tsx watch src/run-scenarios.ts",
+    "scenarios": "tsx src/run-scenarios.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "openai": "^4.98.0",
+    "viem": "2.21.54"
+  },
+  "devDependencies": {
+    "@types/node": "^20.17.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}

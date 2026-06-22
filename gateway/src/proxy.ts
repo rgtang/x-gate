@@ -1,3 +1,4 @@
+import type { Hex } from "viem";
 import * as http from "node:http";
 import * as https from "node:https";
 import { URL } from "node:url";
@@ -7,6 +8,7 @@ import { GATEWAY_CONFIG, ROUTE_RULES, FREE_PATHS } from "./config";
 import { buildX402Response, parsePaymentHeader } from "./x402";
 import { verifyPayment } from "./verifier";
 import { addLog } from "./store";
+import { buildBuiltinApiBody, isBuiltinApiPath } from "./demo-api";
 
 const DEFAULT_RULE: RouteRule = {
   pattern: /.*/,
@@ -78,6 +80,20 @@ async function forwardUpstream(
     if (body.length > 0) proxyReq.write(body);
     proxyReq.end();
   });
+}
+
+function respondBuiltinApi(
+  res: http.ServerResponse,
+  pathname: string,
+): number {
+  const payload = buildBuiltinApiBody(pathname);
+  res.writeHead(200, {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "X-X-Gate-Source": "builtin",
+  });
+  res.end(JSON.stringify(payload));
+  return 200;
 }
 
 async function tryForward(
@@ -159,7 +175,7 @@ export function createProxyHandler(): http.RequestListener {
     // ── Verify payment (stub) ─────────────────────────────────────────────────
     const minMicro = BigInt(Math.round(rule.priceUSDC * 1_000_000));
     const verification = await verifyPayment(
-      parsed.txHash as `0x${string}`,
+      parsed.txHash as Hex,
       GATEWAY_CONFIG.gatewayWallet,
       minMicro,
     ).catch((err) => {
@@ -186,8 +202,11 @@ export function createProxyHandler(): http.RequestListener {
       return;
     }
 
-    // ── Payment verified — forward to upstream ────────────────────────────────
-    const upstreamStatus = await tryForward(req, res, body);
+    // ── Payment verified — builtin demo API or upstream ─────────────────────
+    const upstreamStatus =
+      GATEWAY_CONFIG.useBuiltinApi && isBuiltinApiPath(pathname)
+        ? respondBuiltinApi(res, pathname)
+        : await tryForward(req, res, body);
     addLog({
       timestamp: Date.now(),
       path: pathname,

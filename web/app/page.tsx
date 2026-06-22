@@ -1,467 +1,185 @@
-"use client";
+import Link from "next/link";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+const STEPS = [
+  {
+    n: "01",
+    title: "Gateway Intercepts",
+    desc: "Every /api/* request hits x-gate on :8402. No X-Payment header → 402 JSON (x402 spec). /bypass is free.",
+  },
+  {
+    n: "02",
+    title: "Agent LLM Decides",
+    desc: "DeepSeek evaluates budget, rate limits, and intent. approve_payment or decline_payment — 5 demo scenarios.",
+  },
+  {
+    n: "03",
+    title: "Both Outcomes On-Chain",
+    desc: "Pay AND skip write to PaymentReceipt.sol on Base Sepolia. Gateway live traffic streams to the dashboard.",
+  },
+] as const;
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+const TAGS = [
+  "Base Sepolia",
+  "x402",
+  "DeepSeek LLM",
+  "viem",
+  "Next.js 15",
+  "Stub Demo",
+] as const;
 
-interface PerSecondData {
-  second: number;
-  paid: number;
-  blocked: number;
-}
-
-interface Stats {
-  totalPaid: number;
-  totalBlocked: number;
-  totalFree: number;
-  totalRevenue: number;
-  recentPerSecond: PerSecondData[];
-}
-
-interface RequestLog {
-  id: string;
-  timestamp: number;
-  path: string;
-  method: string;
-  status: "paid" | "blocked" | "free";
-  amountUSDC: number;
-  txHash?: string;
-  upstreamStatus?: number;
-}
-
-interface SSEPayload {
-  type?: string;
-  stats?: Stats;
-  logs?: RequestLog[];
-  ts: number;
-}
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const EMPTY_STATS: Stats = {
-  totalPaid: 0,
-  totalBlocked: 0,
-  totalFree: 0,
-  totalRevenue: 0,
-  recentPerSecond: [],
-};
-
-function fmtTime(ts: number) {
-  return new Date(ts * 1000).toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function StatCard({
-  label,
-  value,
-  accent,
-  sub,
-}: {
-  label: string;
-  value: string | number;
-  accent: string;
-  sub?: string;
-}) {
+export default function LandingPage() {
   return (
-    <div className="border border-[var(--c-border-bright)] bg-[var(--c-surface)] p-4 flex flex-col gap-1">
-      <span
-        className="text-[9px] tracking-[0.25em] uppercase"
-        style={{ color: "var(--c-green-dim)" }}
-      >
-        {label}
-      </span>
-      <span
-        className={`text-3xl font-bold tabular-nums leading-none ${accent}`}
-      >
-        {value}
-      </span>
-      {sub && (
-        <span className="text-[9px]" style={{ color: "var(--c-green-dim)" }}>
-          {sub}
+    <main
+      className="min-h-screen relative overflow-hidden"
+      style={{ background: "var(--c-bg)", color: "var(--c-green)" }}
+    >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-30"
+        style={{
+          backgroundImage: `
+            linear-gradient(var(--c-border) 1px, transparent 1px),
+            linear-gradient(90deg, var(--c-border) 1px, transparent 1px)
+          `,
+          backgroundSize: "48px 48px",
+        }}
+      />
+
+      <nav className="relative z-10 mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
+        <span
+          className="text-sm font-bold tracking-[0.25em] uppercase"
+          style={{ color: "var(--c-green-bright)" }}
+        >
+          X-GATE
         </span>
-      )}
-    </div>
-  );
-}
-
-function StatusPill({ status }: { status: RequestLog["status"] }) {
-  const map = {
-    paid: { label: "PAID", color: "var(--c-green)" },
-    blocked: { label: "BLOCKED", color: "var(--c-red)" },
-    free: { label: "FREE", color: "var(--c-yellow)" },
-  } as const;
-  const { label, color } = map[status];
-  return (
-    <span className="font-bold text-[10px]" style={{ color }}>
-      {label}
-    </span>
-  );
-}
-
-// ── Scanline overlay (pure CSS effect) ───────────────────────────────────────
-
-function Scanlines() {
-  return (
-    <div
-      className="pointer-events-none fixed inset-0 z-50"
-      style={{
-        backgroundImage:
-          "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)",
-      }}
-      aria-hidden
-    />
-  );
-}
-
-// ── Main dashboard ────────────────────────────────────────────────────────────
-
-export default function Dashboard() {
-  const [stats, setStats] = useState<Stats>(EMPTY_STATS);
-  const [logs, setLogs] = useState<RequestLog[]>([]);
-  const [connected, setConnected] = useState(false);
-  const [lastTs, setLastTs] = useState<number | null>(null);
-  const esRef = useRef<EventSource | null>(null);
-
-  useEffect(() => {
-    const es = new EventSource("/api/logs");
-    esRef.current = es;
-
-    es.onopen = () => setConnected(true);
-    es.onerror = () => setConnected(false);
-
-    es.onmessage = (e: MessageEvent<string>) => {
-      try {
-        const payload = JSON.parse(e.data) as SSEPayload;
-        if (payload.type === "connected") return;
-        if (payload.stats) setStats(payload.stats);
-        if (payload.logs) setLogs(payload.logs);
-        setLastTs(payload.ts);
-      } catch {
-        /* ignore parse errors */
-      }
-    };
-
-    return () => {
-      es.close();
-    };
-  }, []);
-
-  const chartData = stats.recentPerSecond.map((d) => ({
-    t: fmtTime(d.second),
-    paid: d.paid,
-    blocked: d.blocked,
-  }));
-
-  const total = stats.totalPaid + stats.totalBlocked + stats.totalFree;
-  const paidPct =
-    total > 0 ? ((stats.totalPaid / total) * 100).toFixed(1) : "0.0";
-
-  return (
-    <>
-      <Scanlines />
-
-      <main
-        className="min-h-screen p-4 md:p-6 space-y-4 max-w-7xl mx-auto"
-        style={{ background: "var(--c-bg)" }}
-      >
-        {/* ── Header ── */}
-        <header
-          className="border p-4 flex items-start md:items-center justify-between gap-4 flex-wrap"
-          style={{ borderColor: "var(--c-border-bright)" }}
-        >
-          <div className="space-y-0.5">
-            <h1
-              className="text-sm tracking-[0.3em] uppercase font-bold"
-              style={{ color: "var(--c-green)" }}
-            >
-              ▸ X-GATE{" "}
-              <span style={{ color: "var(--c-green-dim)" }}>//</span>{" "}
-              On-Chain Micropayment API Gateway
-            </h1>
-            <p
-              className="text-[9px] tracking-widest uppercase"
-              style={{ color: "var(--c-green-dim)" }}
-            >
-              x402 Protocol · Base Sepolia · USDC · viem · Stub Verifier
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 text-[10px]">
-            <span
-              className="w-2 h-2 rounded-full inline-block"
-              style={{
-                background: connected ? "var(--c-green-bright)" : "var(--c-red)",
-                boxShadow: connected
-                  ? "0 0 6px var(--c-green-bright)"
-                  : "none",
-              }}
-            />
-            <span style={{ color: connected ? "var(--c-green)" : "var(--c-red)" }}>
-              {connected ? "● LIVE" : "○ OFFLINE"}
-            </span>
-            {lastTs && (
-              <span
-                className="ml-2 tabular-nums"
-                style={{ color: "var(--c-green-dim)" }}
-              >
-                {new Date(lastTs).toLocaleTimeString()}
-              </span>
-            )}
-          </div>
-        </header>
-
-        {/* ── Stats Row ── */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard
-            label="Paid Requests"
-            value={stats.totalPaid}
-            accent="text-[var(--c-green)]"
-            sub={`${paidPct}% of total`}
-          />
-          <StatCard
-            label="Blocked (402)"
-            value={stats.totalBlocked}
-            accent="text-[var(--c-red)]"
-          />
-          <StatCard
-            label="Free Pass"
-            value={stats.totalFree}
-            accent="text-[var(--c-yellow)]"
-            sub="/bypass &amp; /health"
-          />
-          <StatCard
-            label="Revenue (USDC)"
-            value={`$${stats.totalRevenue.toFixed(4)}`}
-            accent="text-[var(--c-cyan)]"
-            sub="simulated"
-          />
-        </div>
-
-        {/* ── Chart ── */}
-        <div
-          className="border p-4"
+        <Link
+          href="/dashboard"
+          className="border px-4 py-2 text-[10px] tracking-[0.2em] uppercase transition-colors hover:opacity-90"
           style={{
             borderColor: "var(--c-border-bright)",
+            color: "var(--c-green-bright)",
             background: "var(--c-surface)",
           }}
         >
-          <p
-            className="text-[9px] tracking-[0.25em] uppercase mb-4"
-            style={{ color: "var(--c-green-dim)" }}
-          >
-            Traffic // Last 60 Seconds — paid vs blocked per second
-          </p>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart
-              data={chartData}
-              margin={{ top: 4, right: 8, bottom: 0, left: -24 }}
-            >
-              <CartesianGrid
-                strokeDasharray="1 4"
-                stroke="var(--c-border)"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="t"
-                stroke="var(--c-border-bright)"
-                tick={{
-                  fill: "var(--c-green-dim)",
-                  fontSize: 8,
-                  fontFamily: "monospace",
-                }}
-                interval={9}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="var(--c-border-bright)"
-                tick={{
-                  fill: "var(--c-green-dim)",
-                  fontSize: 8,
-                  fontFamily: "monospace",
-                }}
-                tickLine={false}
-                axisLine={false}
-                allowDecimals={false}
-              />
-              <Tooltip
-                contentStyle={{
-                  background: "#080808",
-                  border: "1px solid var(--c-border-bright)",
-                  borderRadius: 0,
-                  fontSize: 10,
-                  fontFamily: "monospace",
-                  color: "var(--c-green)",
-                }}
-                labelStyle={{ color: "var(--c-green-dim)", marginBottom: 2 }}
-                itemStyle={{ color: "var(--c-green)" }}
-                cursor={{ stroke: "var(--c-border-bright)", strokeDasharray: "3 3" }}
-              />
-              <Legend
-                wrapperStyle={{
-                  fontSize: 9,
-                  fontFamily: "monospace",
-                  color: "var(--c-green-dim)",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.15em",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="paid"
-                stroke="var(--c-green-bright)"
-                strokeWidth={1.5}
-                dot={false}
-                activeDot={{ r: 3, fill: "var(--c-green-bright)", strokeWidth: 0 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="blocked"
-                stroke="var(--c-red)"
-                strokeWidth={1.5}
-                dot={false}
-                activeDot={{ r: 3, fill: "var(--c-red)", strokeWidth: 0 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+          Open Dashboard →
+        </Link>
+      </nav>
 
-        {/* ── Log Table ── */}
-        <div
-          className="border p-4"
+      <section className="relative z-10 mx-auto max-w-4xl px-6 pt-12 pb-16 text-center">
+        <p
+          className="mb-6 inline-block border px-3 py-1 text-[10px] tracking-[0.25em] uppercase"
+          style={{ borderColor: "var(--c-border-bright)", color: "var(--c-green-dim)" }}
+        >
+          AI × Web3 Hackathon
+        </p>
+        <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
+          On-Chain Micropayment{" "}
+          <span style={{ color: "var(--c-green-bright)" }}>API Gateway</span>
+        </h1>
+        <p
+          className="mx-auto max-w-2xl text-sm leading-relaxed mb-10"
+          style={{ color: "var(--c-green-dim)" }}
+        >
+          Cloudflare-like HTTP gateway with x402 micropayments, an AI agent that
+          autonomously decides pay or skip, and a dual-view dashboard — live
+          gateway traffic plus immutable on-chain audit.
+        </p>
+        <Link
+          href="/dashboard"
+          className="inline-block px-8 py-3 text-xs font-bold tracking-[0.2em] uppercase"
           style={{
-            borderColor: "var(--c-border-bright)",
-            background: "var(--c-surface)",
+            background: "var(--c-green-bright)",
+            color: "var(--c-bg)",
           }}
         >
-          <p
-            className="text-[9px] tracking-[0.25em] uppercase mb-3"
-            style={{ color: "var(--c-green-dim)" }}
-          >
-            Request Log // {logs.length} recent entries
-          </p>
+          Live Dashboard
+        </Link>
+      </section>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-[11px] border-collapse">
-              <thead>
-                <tr
-                  className="border-b text-[9px] tracking-[0.2em] uppercase"
-                  style={{
-                    borderColor: "var(--c-border)",
-                    color: "var(--c-green-dim)",
-                  }}
-                >
-                  {["Time", "Method", "Path", "Status", "Amount", "Tx Hash"].map(
-                    (h) => (
-                      <th key={h} className="text-left py-2 pr-6 font-normal">
-                        {h}
-                      </th>
-                    ),
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {logs.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="py-8 text-center text-[11px]"
-                      style={{ color: "var(--c-border-bright)" }}
-                    >
-                      Waiting for traffic…{" "}
-                      <span style={{ color: "var(--c-green-dim)" }}>
-                        run{" "}
-                        <code
-                          className="px-1"
-                          style={{
-                            background: "var(--c-border)",
-                            color: "var(--c-green)",
-                          }}
-                        >
-                          npm run demo
-                        </code>{" "}
-                        inside gateway/
-                      </span>
-                    </td>
-                  </tr>
-                ) : (
-                  logs.map((log) => (
-                    <tr
-                      key={log.id}
-                      className="border-b transition-colors"
-                      style={{ borderColor: "var(--c-border)" }}
-                    >
-                      <td
-                        className="py-2 pr-6 tabular-nums whitespace-nowrap"
-                        style={{ color: "var(--c-green-dim)" }}
-                      >
-                        {new Date(log.timestamp).toLocaleTimeString("en-US", {
-                          hour12: false,
-                        })}
-                      </td>
-                      <td
-                        className="py-2 pr-6"
-                        style={{ color: "var(--c-green)" }}
-                      >
-                        {log.method}
-                      </td>
-                      <td
-                        className="py-2 pr-6 max-w-[180px] truncate"
-                        style={{ color: "var(--c-cyan)" }}
-                      >
-                        {log.path}
-                      </td>
-                      <td className="py-2 pr-6">
-                        <StatusPill status={log.status} />
-                      </td>
-                      <td
-                        className="py-2 pr-6 tabular-nums"
-                        style={{ color: "var(--c-green)" }}
-                      >
-                        {log.amountUSDC > 0
-                          ? `$${log.amountUSDC.toFixed(4)}`
-                          : "—"}
-                      </td>
-                      <td
-                        className="py-2 font-mono"
-                        style={{ color: "var(--c-green-dim)" }}
-                      >
-                        {log.txHash
-                          ? `${log.txHash.slice(0, 10)}…${log.txHash.slice(-4)}`
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ── Footer ── */}
-        <footer
-          className="text-[9px] text-center tracking-[0.3em] uppercase pb-2"
+      <section className="relative z-10 mx-auto max-w-4xl px-6 pb-16">
+        <p
+          className="mb-8 text-center text-[10px] tracking-[0.3em] uppercase"
           style={{ color: "var(--c-border-bright)" }}
         >
-          X-GATE · AI×Web3 Hackathon · Base Sepolia · x402 Protocol · viem
-        </footer>
-      </main>
-    </>
+          // how it works
+        </p>
+        <div className="grid gap-4 md:grid-cols-3">
+          {STEPS.map((s) => (
+            <div
+              key={s.n}
+              className="border p-5 text-left"
+              style={{
+                borderColor: "var(--c-border-bright)",
+                background: "var(--c-surface)",
+              }}
+            >
+              <span
+                className="text-[10px] tracking-widest"
+                style={{ color: "var(--c-border-bright)" }}
+              >
+                {s.n}
+              </span>
+              <h3 className="mt-2 mb-2 text-sm font-bold">{s.title}</h3>
+              <p className="text-[11px] leading-relaxed" style={{ color: "var(--c-green-dim)" }}>
+                {s.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="relative z-10 mx-auto max-w-4xl px-6 pb-12">
+        <p
+          className="mb-4 text-center text-[10px] tracking-[0.3em] uppercase"
+          style={{ color: "var(--c-border-bright)" }}
+        >
+          // demo commands
+        </p>
+        <div
+          className="border p-4 text-[11px] space-y-2"
+          style={{
+            borderColor: "var(--c-border-bright)",
+            background: "var(--c-surface)",
+            color: "var(--c-green-dim)",
+          }}
+        >
+          <p>
+            <span style={{ color: "var(--c-green)" }}>1.</span>{" "}
+            <code>cd gateway && npm run dev</code>
+          </p>
+          <p>
+            <span style={{ color: "var(--c-green)" }}>2.</span>{" "}
+            <code>cd web && npm run dev</code>
+          </p>
+          <p>
+            <span style={{ color: "var(--c-green)" }}>3.</span>{" "}
+            <code>cd agent && npm run scenarios</code>
+          </p>
+        </div>
+      </section>
+
+      <section className="relative z-10 mx-auto max-w-4xl px-6 pb-20">
+        <div className="flex flex-wrap justify-center gap-2">
+          {TAGS.map((t) => (
+            <span
+              key={t}
+              className="border px-3 py-1 text-[10px] tracking-wide"
+              style={{ borderColor: "var(--c-border)", color: "var(--c-green-dim)" }}
+            >
+              {t}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <footer
+        className="relative z-10 border-t py-4 text-center text-[9px] tracking-[0.3em] uppercase"
+        style={{
+          borderColor: "var(--c-border)",
+          color: "var(--c-border-bright)",
+        }}
+      >
+        X-GATE · Base Sepolia testnet · stub payment mode
+      </footer>
+    </main>
   );
 }
