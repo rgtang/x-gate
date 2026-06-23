@@ -1,9 +1,26 @@
 import "dotenv/config";
+import * as fs from "node:fs";
 import * as http from "node:http";
+import * as path from "node:path";
 
 import { GATEWAY_CONFIG } from "./config";
 import { createProxyHandler } from "./proxy";
 import { getLogs, getStats } from "./store";
+
+const CAP_ORDERS_FILE =
+  process.env.CAP_ORDERS_FILE ??
+  path.join(__dirname, "../data/cap-orders.json");
+
+function readCapOrders(): unknown[] {
+  try {
+    if (!fs.existsSync(CAP_ORDERS_FILE)) return [];
+    const raw = fs.readFileSync(CAP_ORDERS_FILE, "utf8");
+    const data = JSON.parse(raw) as unknown;
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
 
 // ── Proxy Server (:8402) ──────────────────────────────────────────────────────
 const proxyServer = http.createServer(createProxyHandler());
@@ -36,6 +53,9 @@ const adminServer = http.createServer((req, res) => {
     );
     res.writeHead(200);
     res.end(JSON.stringify(getLogs(limit)));
+  } else if (url.pathname === "/cap-orders") {
+    res.writeHead(200);
+    res.end(JSON.stringify(readCapOrders()));
   } else {
     res.writeHead(404);
     res.end(JSON.stringify({ error: "Not Found" }));

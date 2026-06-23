@@ -5,9 +5,14 @@
   "scripts": {
     "dev": "tsx watch src/run-scenarios.ts",
     "scenarios": "tsx src/run-scenarios.ts",
+    "croo:provider": "tsx src/croo/provider.ts",
+    "croo:demo": "tsx src/croo/requester-demo.ts",
+    "croo:check": "tsx src/croo/check-env.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@croo-network/sdk": "^0.2.1",
+    "@croo-network/sdk": "^0.2.1",
     "dotenv": "^16.4.5",
     "openai": "^4.98.0",
     "viem": "2.21.54"

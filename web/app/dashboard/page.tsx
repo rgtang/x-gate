@@ -5,9 +5,10 @@ import { useState } from "react";
 
 import { Scanlines } from "../components/scanlines";
 import AuditPanel from "./audit-panel";
+import CapPanel from "./cap-panel";
 import LivePanel from "./live-panel";
 
-type Tab = "live" | "audit";
+type Tab = "live" | "audit" | "cap";
 
 export default function DashboardPage() {
   const [tab, setTab] = useState<Tab>("live");
@@ -40,7 +41,7 @@ export default function DashboardPage() {
               className="text-[9px] tracking-widest uppercase"
               style={{ color: "var(--c-green-dim)" }}
             >
-              Gateway traffic · Agent on-chain audit
+              Gateway traffic · Agent on-chain audit · CROO CAP
             </p>
           </div>
 
@@ -52,6 +53,7 @@ export default function DashboardPage() {
               [
                 ["live", "Gateway Live"],
                 ["audit", "On-Chain Audit"],
+                ["cap", "CAP Orders"],
               ] as const
             ).map(([id, label]) => (
               <button
@@ -74,7 +76,13 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {tab === "live" ? <LivePanel /> : <AuditPanel />}
+        {tab === "live" ? (
+          <LivePanel />
+        ) : tab === "audit" ? (
+          <AuditPanel />
+        ) : (
+          <CapPanel />
+        )}
 
         <footer
           className="text-[9px] text-center tracking-[0.3em] uppercase pb-2"

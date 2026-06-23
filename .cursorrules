@@ -2,40 +2,47 @@
 
 # Project Context
 项目名: xGate
-One-liner: 给任意API做付费网关 + AI Agent 自主决策是否付费
-方向: AI 支付
+One-liner: 给任意API做付费网关 + AI Agent 自主决策是否付费 + CROO CAP 集成
+方向: AI 支付 · CROO Agent Hackathon
 
 核心场景:
 - API 提供商: gateway/ 拦截流量，x402 402 收费
 - AI 消费者: agent/ LLM 决策 pay/skip，stub 模式调 gateway
+- CROO CAP: provider 接 negotiate → pay → LLM policy → deliver + receipt
 - 链上审计: PaymentReceipt.sol — pay 和 skip 都写 receipt
-- 实时仪表盘: web/ SSE 展示 gateway 流量
+- 实时仪表盘: web/ Live + Audit + CAP Orders
 
 Packages（独立 npm，非 monorepo）:
-- gateway/  — 反向代理 :8402 + admin :8403
-- agent/    — LLM 场景 runner + 链上 receipt
-- web/      — Next.js 15 实时仪表盘
+- gateway/  — 反向代理 :8402 + admin :8403 + /cap-orders
+- agent/    — LLM scenarios + croo:provider + croo:demo
+- web/      — Next.js 15 三 Tab Dashboard
 
 # Tech Stack
 - TypeScript strict, tsx, viem v2, OpenAI SDK (DeepSeek)
+- @croo-network/sdk — CAP order lifecycle
 - Next.js 15, Tailwind v4, recharts
 - Base Sepolia testnet, x402 protocol, stub verifier (gateway)
 
 # Code Style
 - 2-space indent; external I/O wrapped in try/catch + 1 retry
-- No database — gateway store.ts in-memory only
-- agent AGENT_DEMO_MODE=stub — fake X-Payment, no real USDC
+- No database — gateway store.ts in-memory; CAP log in gateway/data/cap-orders.json
+- agent AGENT_DEMO_MODE=stub — fake X-Payment for gateway; CAP payOrder uses testnet USDC
+- BASE_RPC_URL must be https://sepolia.base.org (never mainnet)
 
 # Autonomy Red Lines
 1. NEVER touch mainnet wallets or keys
 2. NEVER commit .env — only .env.example
-3. NEVER log WALLET_PRIVATE_KEY / GATEWAY_PRIVATE_KEY
+3. NEVER log WALLET_PRIVATE_KEY / GATEWAY_PRIVATE_KEY / CROO_SDK_KEY*
 4. NEVER introduce Postgres/SQLite/Redis
 5. agent pay cases use stub X-Payment unless explicitly switching to live
 
-# Week 2 Plan
-- D1 框架 + gateway/web 闭环
-- D2 agent scenarios + LLM 决策
-- D3 PaymentReceipt 部署 + receipt.ts
-- D4 真实 verifier（可选）
-- D5 仪表盘 polish + Vercel
+# CROO Week 1 (feat/croo-cap-minimal) — DONE
+- croo/client.ts + provider.ts + requester-demo.ts
+- policy.ts shared by scenarios + CAP provider
+- Dashboard CAP Orders tab
+- npm run croo:provider | croo:demo
+
+# Week 2+ Plan
+- M5 真 USDC verifier
+- M7 Demo 视频 + Vercel
+- M8 OpenClaw + E2E CI

@@ -14,6 +14,8 @@
 | **Dashboard (local)** | `http://localhost:3000/dashboard` |
 | **Landing (local)** | `http://localhost:3000/` |
 | **Contract (Base Sepolia)** | [PaymentReceipt on Basescan](https://sepolia.basescan.org/address/0x2d29bFa1bd917CB38D9CE796BE40073B080AAbB0) |
+| **Hackathon** | [CROO Agent Hackathon · DoraHacks](https://dorahacks.io/hackathon/croo-hackathon/buidl) |
+| **Agent Store** | [agent.croo.network](https://agent.croo.network) |
 
 > Use your own contract address after Remix deploy. Run `npm run scenarios`, then open
 > **Dashboard → On-Chain Audit** for clickable TX links.
@@ -141,6 +143,30 @@ cd gateway && npm run demo   # 10 requests, 5 with fake X-Payment
 
 Shows traffic in **Dashboard → Gateway Live** (HTTP hits only; skip cases do not appear there).
 
+### CROO CAP demo (Week 1 — `feat/croo-cap-minimal`)
+
+Three terminals — **Provider 与 Requester 必须是 Dashboard 里两个不同的 Agent**（两个 SDK Key）:
+
+```bash
+# T1 — gateway (match GATEWAY_BASE_URL / ADMIN_PORT in agent & web env)
+cd gateway && npm run dev
+
+# T2 — CAP policy provider (listens for negotiations)
+cd agent && npm run croo:provider
+
+# T3 — requester demo (default: pay case)
+cd agent && npm run croo:demo
+
+# Skip case preset
+cd agent && CROO_DEMO_CASE=skip npm run croo:demo
+```
+
+Open **Dashboard → CAP Orders** for the latest order + receipt links.
+
+**Minimum pass:** terminal shows `OrderCompleted`, delivery JSON includes `action`, `receiptTx`, and `capOrderId`.
+
+**Troubleshooting:** `cannot negotiate own service` → `CROO_SDK_KEY_REQUESTER` 必须来自另一个 Agent，不能和 Provider 相同。先跑 `npm run croo:check`。
+
 ---
 
 ## 5 · Tech Stack
@@ -151,6 +177,7 @@ Shows traffic in **Dashboard → Gateway Live** (HTTP hits only; skip cases do n
 | **Agent** | OpenAI SDK (DeepSeek default), tool-calling, viem 2.21 |
 | **Web** | Next.js 15, Tailwind v4, recharts, SSE, server-side viem `getLogs` |
 | **Chain** | Base Sepolia — `PaymentReceipt.sol`, `MockUSDC.sol` (Remix deploy) |
+| **CROO** | `@croo-network/sdk` — CAP negotiate → pay → deliver (provider + requester demo) |
 
 **Design constraints**
 
@@ -160,7 +187,24 @@ Shows traffic in **Dashboard → Gateway Live** (HTTP hits only; skip cases do n
 
 ---
 
-## 6 · What Ships Today
+## 6 · Why CROO Agent Hackathon
+
+**Target:** [CROO Agent Hackathon](https://dorahacks.io/hackathon/croo-hackathon/buidl) · deadline **2026-07-12**
+
+**Track:** Developer Tooling Agents · Data & Verification Agents · DeFi / On-chain Ops
+
+| CROO theme | X-Gate on this branch |
+|------------|------------------------|
+| AI Agents | LLM pay/skip policy before API spend |
+| CAP / A2A | Provider service on Agent Store — requester hires via `negotiateOrder` |
+| On-chain audit | `PaymentReceipt` for pay **and** skip; delivery JSON links CAP order → receipt TX |
+| Developer tooling | x402 gateway + CAP policy agent + dashboard (Live / Audit / CAP) |
+
+**Magic moment:** Skip decisions still `deliverOrder` with `action: skip` + on-chain receipt — full verifiable audit.
+
+---
+
+## 7 · What Ships Today
 
 ### `gateway/`
 
@@ -183,13 +227,15 @@ Shows traffic in **Dashboard → Gateway Live** (HTTP hits only; skip cases do n
 | Scenario runner | `npm run scenarios` — 5 cases, `--case=N` for single run |
 | On-chain receipt | `issueReceipt()` after every pay **and** skip |
 | Memo format | `pay\|reason` or `skip\|reason` (max 100 chars) |
+| CAP provider | `npm run croo:provider` — accept negotiation, policy, deliver |
+| CAP requester demo | `npm run croo:demo` — negotiate → pay → read delivery |
 
 ### `web/`
 
 | Feature | Detail |
 |---------|--------|
 | Landing | `/` — how it works + demo commands |
-| Dashboard | `/dashboard` — two tabs in one view |
+| Dashboard | `/dashboard` — **Gateway Live**, **On-Chain Audit**, **CAP Orders** |
 | Gateway Live | SSE poll of admin `/stats` + `/logs`; 60s traffic chart |
 | On-Chain Audit | Fetches `ReceiptIssued` events; Basescan links; 60s refresh |
 | Filter | Optional `NEXT_PUBLIC_AGENT_ADDRESS` to filter by payer |
@@ -203,29 +249,30 @@ Shows traffic in **Dashboard → Gateway Live** (HTTP hits only; skip cases do n
 
 ---
 
-## 7 · Roadmap
+## 8 · Roadmap
 
 | Phase | Item | Status |
 |-------|------|--------|
 | M1 | Gateway x402 + admin stats + builtin demo API | ✅ |
 | M2 | Agent LLM scenarios (5 cases) + stub pay | ✅ |
 | M3 | `PaymentReceipt.sol` + Audit dashboard tab | ✅ |
-| M4 | Landing + dual-tab dashboard | ✅ |
+| M4 | Landing + dashboard tabs | ✅ |
+| **M4b** | **CROO CAP minimal integration (Week 1)** | ✅ |
 | M5 | Real USDC verifier in `gateway/verifier.ts` | ⬜ |
 | M6 | `AGENT_DEMO_MODE=live` — real x402 payment flow | ⬜ |
-| M7 | Public deploy (Vercel) + one-command demo script | ⬜ |
-| M8 | E2E tests + CI | ⬜ |
+| M7 | Demo video + Vercel + `demo:pitch` script | ⬜ |
+| M8 | OpenClaw skill + E2E CI | ⬜ |
 
 ---
 
-## 8 · Reference
+## 9 · Reference
 
 ### Packages & ports
 
 | Package | Port | Role |
 |---------|------|------|
 | `gateway` | 8402 | x402 reverse proxy |
-| `gateway` | 8403 | Admin `/stats`, `/logs` |
+| `gateway` | 8403 | Admin `/stats`, `/logs`, `/cap-orders` |
 | `web` | 3000 | Landing + dashboard |
 | `agent` | — | Outbound LLM client |
 
@@ -255,6 +302,7 @@ Shows traffic in **Dashboard → Gateway Live** (HTTP hits only; skip cases do n
 | `WALLET_PRIVATE_KEY` | Testnet — signs receipts |
 | `PAYMENT_RECEIPT_ADDRESS` | Deployed contract |
 | `PAYEE_ADDRESS` | Gateway wallet on pay decisions |
+| `CROO_*` | CAP provider/requester — see `agent/.env.example` |
 
 </details>
 
@@ -277,13 +325,14 @@ Shows traffic in **Dashboard → Gateway Live** (HTTP hits only; skip cases do n
 
 ```bash
 cd gateway && npm run dev | start | demo | typecheck
-cd agent   && npm run scenarios | npm run scenarios -- --case=1 | typecheck
+cd agent   && npm run scenarios | npm run croo:provider | npm run croo:demo | typecheck
 cd web     && npm run dev | build | typecheck
 ```
 
 ### Related
 
-- [pay-gate](https://github.com/rgtang/pay-gate) — complementary AI client side (x-gate is the gateway side)
+- [pay-gate](https://github.com/rgtang/pay-gate) — complementary AI client side
+- [CROO Agent Protocol](https://croo.network) · [Agent Store](https://agent.croo.network)
 
 ---
 

@@ -1,0 +1,63 @@
+[
+  {
+    "id": "5604f964-6b81-4661-9826-0726d1cf54ea",
+    "orderId": "5604f964-6b81-4661-9826-0726d1cf54ea",
+    "negotiationId": "8d07b418-cb73-4ddc-926f-5d16871e4d0a",
+    "serviceId": "2bb815ac-d717-494b-8275-823d5d984ae9",
+    "status": "completed",
+    "action": "pay",
+    "reason": "Fetching real-time ETH spot price for portfolio rebalance before market open is a clear business need, the API path matches the intent, budget is sufficient (0.5 USDC remaining, 0.001 USDC cost), rate limit is fine, and no cooldown applies.",
+    "scenarioName": "high-value-first-call",
+    "requirementsSummary": "Fetch ETH spot price for portfolio rebalance before market open",
+    "createdAt": 1782228609807,
+    "updatedAt": 1782228625788,
+    "receiptTx": "0x768fed083bf727f39f5cd44b3995cceaf80336bd35a20982e10bf456b5d000c5",
+    "capDeliverTx": "0xf692e001dc4f8a1e0cc17a4c72d5e22c12675e69592d6f9bf5acb3fba8a76f30",
+    "httpStatus": 200,
+    "delivery": {
+      "source": "x-gate-policy-agent",
+      "capOrderId": "5604f964-6b81-4661-9826-0726d1cf54ea",
+      "negotiationId": "8d07b418-cb73-4ddc-926f-5d16871e4d0a",
+      "action": "pay",
+      "reason": "Fetching real-time ETH spot price for portfolio rebalance before market open is a clear business need, the API path matches the intent, budget is sufficient (0.5 USDC remaining, 0.001 USDC cost), rate limit is fine, and no cooldown applies.",
+      "httpStatus": 200,
+      "gatewaySuccess": true,
+      "receiptTx": "0x768fed083bf727f39f5cd44b3995cceaf80336bd35a20982e10bf456b5d000c5",
+      "capDeliverTx": null,
+      "intent": "Fetch ETH spot price for portfolio rebalance before market open",
+      "target": "http://localhost:8412/api/market/eth-price",
+      "scenarioName": "high-value-first-call",
+      "elapsedMs": 5545
+    }
+  },
+  {
+    "id": "eba184a9-adda-4641-8999-afc4210f66a9",
+    "orderId": "eba184a9-adda-4641-8999-afc4210f66a9",
+    "negotiationId": "d41390c0-ca53-4f91-a324-e7b65614e4df",
+    "serviceId": "2bb815ac-d717-494b-8275-823d5d984ae9",
+    "status": "completed",
+    "action": "pay",
+    "reason": "gateway failed: gateway call failed after retries",
+    "scenarioName": "high-value-first-call",
+    "requirementsSummary": "Fetch ETH spot price for portfolio rebalance before market open",
+    "createdAt": 1782228248236,
+    "updatedAt": 1782228266333,
+    "receiptTx": null,
+    "capDeliverTx": "0xd4a55584fb795c18bd6d38a87cde43daae05d1545349ce8e43a025580d10edde",
+    "delivery": {
+      "source": "x-gate-policy-agent",
+      "capOrderId": "eba184a9-adda-4641-8999-afc4210f66a9",
+      "negotiationId": "d41390c0-ca53-4f91-a324-e7b65614e4df",
+      "action": "pay",
+      "reason": "gateway failed: gateway call failed after retries",
+      "httpStatus": null,
+      "gatewaySuccess": false,
+      "receiptTx": null,
+      "capDeliverTx": null,
+      "intent": "Fetch ETH spot price for portfolio rebalance before market open",
+      "target": "http://localhost:8412/api/market/eth-price",
+      "scenarioName": "high-value-first-call",
+      "elapsedMs": 5687
+    }
+  }
+]
