@@ -1,4 +1,4 @@
-aaaaa# X-Gate · On-Chain Micropayment API Gateway
+# X-Gate · On-Chain Micropayment API Gateway
 
 > **Baseline stack for AI × paid APIs** — x402 HTTP gateway, LLM pay/skip agent,
 > on-chain decision receipts, and a dual-view dashboard.
