@@ -29,7 +29,7 @@ const X = "\x1b[0m";
 
 function printHeader(): void {
   console.log(`\n${B}  ╔══════════════════════════════════════════════════════╗${X}`);
-  console.log(`${B}  ║   X-GATE AGENT  //  LLM Scenario Runner (stub pay)   ║${X}`);
+  console.log(`${B}  ║   X-GATE AGENT  //  LLM Scenario Runner              ║${X}`);
   console.log(`${B}  ╚══════════════════════════════════════════════════════╝${X}`);
   console.log(`  ${D}Gateway : ${process.env.GATEWAY_BASE_URL ?? "http://localhost:8402"}${X}`);
   console.log(`  ${D}Mode    : ${process.env.AGENT_DEMO_MODE ?? "stub"}${X}`);

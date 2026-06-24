@@ -1,0 +1,9 @@
+{
+  "name": "x-gate",
+  "private": true,
+  "description": "X-Gate monorepo scripts — gateway + agent + web run independently",
+  "scripts": {
+    "demo:pitch": "node scripts/demo-pitch.mjs",
+    "typecheck": "npm run typecheck --prefix gateway && npm run typecheck --prefix agent && npm run typecheck --prefix web"
+  }
+}

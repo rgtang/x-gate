@@ -153,7 +153,8 @@ export function createProxyHandler(): http.RequestListener {
 
     // ── Check X-Payment header ────────────────────────────────────────────────
     const rawPayment = req.headers["x-payment"] as string | undefined;
-    const parsed = parsePaymentHeader(rawPayment);
+    const strictHeader = GATEWAY_CONFIG.verifierMode === "live";
+    const parsed = parsePaymentHeader(rawPayment, strictHeader);
 
     if (!parsed.valid) {
       addLog({

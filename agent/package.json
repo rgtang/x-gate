@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@croo-network/sdk": "^0.2.1",
-    "@croo-network/sdk": "^0.2.1",
     "dotenv": "^16.4.5",
     "openai": "^4.98.0",
     "viem": "2.21.54"

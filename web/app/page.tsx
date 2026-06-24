@@ -3,28 +3,27 @@ import Link from "next/link";
 const STEPS = [
   {
     n: "01",
-    title: "Gateway Intercepts",
-    desc: "Every /api/* request hits x-gate on :8402. No X-Payment header → 402 JSON (x402 spec). /bypass is free.",
+    title: "API 要收钱",
+    desc: "任何 /api 请求没付款就收到 402。像 Cloudflare 一样挡在 API 前面，按次收费。",
   },
   {
     n: "02",
-    title: "Agent LLM Decides",
-    desc: "DeepSeek evaluates budget, rate limits, and intent. approve_payment or decline_payment — 5 demo scenarios.",
+    title: "AI 帮你决定",
+    desc: "Agent 看预算、频率、意图是否匹配——该付就付，不该付就跳过。不乱花钱调 API。",
   },
   {
     n: "03",
-    title: "Both Outcomes On-Chain",
-    desc: "Pay AND skip write to PaymentReceipt.sol on Base Sepolia. Gateway live traffic streams to the dashboard.",
+    title: "付和不付都上链",
+    desc: "每一次「付」或「跳过」都写入 Base Sepolia，Dashboard 实时可见，可审计。",
   },
 ] as const;
 
 const TAGS = [
+  "AI Agent",
+  "x402 微支付",
+  "CROO CAP",
   "Base Sepolia",
-  "x402",
-  "DeepSeek LLM",
-  "viem",
-  "Next.js 15",
-  "Stub Demo",
+  "可审计",
 ] as const;
 
 export default function LandingPage() {
@@ -60,7 +59,7 @@ export default function LandingPage() {
             background: "var(--c-surface)",
           }}
         >
-          Open Dashboard →
+          打开 Dashboard →
         </Link>
       </nav>
 
@@ -69,30 +68,32 @@ export default function LandingPage() {
           className="mb-6 inline-block border px-3 py-1 text-[10px] tracking-[0.25em] uppercase"
           style={{ borderColor: "var(--c-border-bright)", color: "var(--c-green-dim)" }}
         >
-          AI × Web3 Hackathon
+          CROO Agent Hackathon
         </p>
         <h1 className="text-3xl md:text-5xl font-bold leading-tight mb-6">
-          On-Chain Micropayment{" "}
-          <span style={{ color: "var(--c-green-bright)" }}>API Gateway</span>
+          AI 帮你不乱花钱
+          <br />
+          <span style={{ color: "var(--c-green-bright)" }}>调 API</span>
         </h1>
         <p
-          className="mx-auto max-w-2xl text-sm leading-relaxed mb-10"
+          className="mx-auto max-w-xl text-sm leading-relaxed mb-10"
           style={{ color: "var(--c-green-dim)" }}
         >
-          Cloudflare-like HTTP gateway with x402 micropayments, an AI agent that
-          autonomously decides pay or skip, and a dual-view dashboard — live
-          gateway traffic plus immutable on-chain audit.
+          给任意 HTTP API 加付费网关。AI Agent 自主决定付还是跳过——预算、频率、意图不匹配就拒付。
+          每次决策链上可查。
         </p>
-        <Link
-          href="/dashboard"
-          className="inline-block px-8 py-3 text-xs font-bold tracking-[0.2em] uppercase"
-          style={{
-            background: "var(--c-green-bright)",
-            color: "var(--c-bg)",
-          }}
-        >
-          Live Dashboard
-        </Link>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link
+            href="/dashboard"
+            className="inline-block px-8 py-3 text-xs font-bold tracking-[0.2em] uppercase"
+            style={{
+              background: "var(--c-green-bright)",
+              color: "var(--c-bg)",
+            }}
+          >
+            实时 Dashboard
+          </Link>
+        </div>
       </section>
 
       <section className="relative z-10 mx-auto max-w-4xl px-6 pb-16">
@@ -100,7 +101,7 @@ export default function LandingPage() {
           className="mb-8 text-center text-[10px] tracking-[0.3em] uppercase"
           style={{ color: "var(--c-border-bright)" }}
         >
-          // how it works
+          // 三步看懂
         </p>
         <div className="grid gap-4 md:grid-cols-3">
           {STEPS.map((s) => (
@@ -132,7 +133,7 @@ export default function LandingPage() {
           className="mb-4 text-center text-[10px] tracking-[0.3em] uppercase"
           style={{ color: "var(--c-border-bright)" }}
         >
-          // demo commands
+          // 5 分钟跑通
         </p>
         <div
           className="border p-4 text-[11px] space-y-2"
@@ -143,16 +144,19 @@ export default function LandingPage() {
           }}
         >
           <p>
-            <span style={{ color: "var(--c-green)" }}>1.</span>{" "}
+            <span style={{ color: "var(--c-green)" }}>T1</span>{" "}
             <code>cd gateway && npm run dev</code>
           </p>
           <p>
-            <span style={{ color: "var(--c-green)" }}>2.</span>{" "}
+            <span style={{ color: "var(--c-green)" }}>T2</span>{" "}
             <code>cd web && npm run dev</code>
           </p>
           <p>
-            <span style={{ color: "var(--c-green)" }}>3.</span>{" "}
-            <code>cd agent && npm run scenarios</code>
+            <span style={{ color: "var(--c-green)" }}>T3</span>{" "}
+            <code>npm run demo:pitch</code>
+            <span className="ml-2" style={{ color: "var(--c-border-bright)" }}>
+              （项目根目录，一键跑 case 1）
+            </span>
           </p>
         </div>
       </section>
@@ -178,7 +182,7 @@ export default function LandingPage() {
           color: "var(--c-border-bright)",
         }}
       >
-        X-GATE · Base Sepolia testnet · stub payment mode
+        X-GATE · Base Sepolia 测试网 · stub / live 双模式
       </footer>
     </main>
   );

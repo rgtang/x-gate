@@ -82,7 +82,13 @@ proxyServer.listen(GATEWAY_CONFIG.proxyPort, () => {
   console.log(`  USDC     : ${GATEWAY_CONFIG.usdcAddress}`);
   console.log(`  ${divider}`);
   console.log(`  Free paths: /bypass, /health`);
-  console.log(`  Verifier  : STUB (accepts any 0x... header)`);
+  console.log(
+    `  Verifier  : ${GATEWAY_CONFIG.verifierMode.toUpperCase()}${
+      GATEWAY_CONFIG.verifierMode === "stub"
+        ? " (accepts any 0x... header)"
+        : " (on-chain USDC Transfer check)"
+    }`,
+  );
   console.log(`  ${divider}\n`);
 });
 

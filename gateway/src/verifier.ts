@@ -1,4 +1,13 @@
-import type { Hex } from "viem";
+import {
+  createPublicClient,
+  decodeEventLog,
+  http,
+  parseAbi,
+  type Hex,
+} from "viem";
+import { baseSepolia } from "viem/chains";
+
+import { GATEWAY_CONFIG } from "./config";
 
 export interface VerificationResult {
   valid: boolean;
@@ -7,44 +16,84 @@ export interface VerificationResult {
   error?: string;
 }
 
-/**
- * STUB verifier — any 0x-prefixed txHash is accepted.
- * Replace this implementation with real on-chain verification once you have
- * a funded testnet wallet and want to enforce actual USDC transfers.
- */
-export async function verifyPayment(
+const TRANSFER_ABI = parseAbi([
+  "event Transfer(address indexed from, address indexed to, uint256 value)",
+]);
+
+function stubVerify(
   txHash: Hex,
-  _expectedRecipient: string,
   expectedMinAmount: bigint,
-): Promise<VerificationResult> {
+): VerificationResult {
   console.log(`[verifier] STUB — skipping on-chain check for ${txHash}`);
   return { valid: true, amount: expectedMinAmount };
+}
 
-  /*
-   * REAL IMPLEMENTATION — uncomment and fill in after stub phase:
-   *
-   * import { createPublicClient, http, parseAbi } from "viem";
-   * import { baseSepolia } from "viem/chains";
-   * import { GATEWAY_CONFIG } from "./config";
-   *
-   * const client = createPublicClient({
-   *   chain: baseSepolia,
-   *   transport: http(GATEWAY_CONFIG.rpcUrl),
-   * });
-   *
-   * const receipt = await client.getTransactionReceipt({ hash: txHash });
-   * if (receipt.status !== "success") return { valid: false, error: "TX failed" };
-   *
-   * const TRANSFER_TOPIC =
-   *   "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-   *
-   * const transferLog = receipt.logs.find(
-   *   (l) =>
-   *     l.address.toLowerCase() === GATEWAY_CONFIG.usdcAddress.toLowerCase() &&
-   *     l.topics[0] === TRANSFER_TOPIC,
-   * );
-   * if (!transferLog) return { valid: false, error: "No USDC Transfer in TX" };
-   *
-   * return { valid: true };
-   */
+async function liveVerify(
+  txHash: Hex,
+  expectedRecipient: string,
+  expectedMinAmount: bigint,
+): Promise<VerificationResult> {
+  const client = createPublicClient({
+    chain: baseSepolia,
+    transport: http(GATEWAY_CONFIG.rpcUrl),
+  });
+
+  let receipt;
+  try {
+    receipt = await client.getTransactionReceipt({ hash: txHash });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { valid: false, error: `TX lookup failed: ${msg}` };
+  }
+
+  if (receipt.status !== "success") {
+    return { valid: false, error: "TX failed on-chain" };
+  }
+
+  const usdc = GATEWAY_CONFIG.usdcAddress.toLowerCase();
+  const recipient = expectedRecipient.toLowerCase();
+
+  for (const log of receipt.logs) {
+    if (log.address.toLowerCase() !== usdc) continue;
+    try {
+      const decoded = decodeEventLog({
+        abi: TRANSFER_ABI,
+        data: log.data,
+        topics: log.topics,
+      });
+      if (decoded.eventName !== "Transfer") continue;
+
+      const to = (decoded.args.to as string).toLowerCase();
+      const value = decoded.args.value as bigint;
+      if (to === recipient && value >= expectedMinAmount) {
+        console.log(
+          `[verifier] LIVE OK ${txHash.slice(0, 10)}… → ${recipient.slice(0, 10)}… amount=${value}`,
+        );
+        return {
+          valid: true,
+          amount: value,
+          from: decoded.args.from as string,
+        };
+      }
+    } catch {
+      continue;
+    }
+  }
+
+  return {
+    valid: false,
+    error: "No USDC Transfer to gateway wallet with sufficient amount",
+  };
+}
+
+/** Verify X-Payment txHash — stub accepts any 0x header; live checks on-chain USDC Transfer. */
+export async function verifyPayment(
+  txHash: Hex,
+  expectedRecipient: string,
+  expectedMinAmount: bigint,
+): Promise<VerificationResult> {
+  if (GATEWAY_CONFIG.verifierMode === "stub") {
+    return stubVerify(txHash, expectedMinAmount);
+  }
+  return liveVerify(txHash, expectedRecipient, expectedMinAmount);
 }

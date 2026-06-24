@@ -180,7 +180,7 @@ export const GATEWAY_TOOLS: OpenAI.Chat.ChatCompletionTool[] = [
     function: {
       name: "approve_payment",
       description:
-        "Approve and call the x-gate paid API endpoint with stub payment.",
+        "Approve and call the x-gate paid API endpoint (stub or live USDC).",
       parameters: {
         type: "object",
         properties: {

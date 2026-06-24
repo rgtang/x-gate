@@ -48,9 +48,12 @@ export interface ParsedPayment {
 
 /**
  * Accept either a raw 0x txHash or a JSON x402 signed-payment envelope.
- * For the stub, any "0x…" prefix is considered valid.
+ * strict=true (live verifier): only valid 64-char tx hashes or JSON envelope.
  */
-export function parsePaymentHeader(header: string | undefined): ParsedPayment {
+export function parsePaymentHeader(
+  header: string | undefined,
+  strict = false,
+): ParsedPayment {
   if (!header) return { txHash: "", valid: false };
   const value = header.trim();
 
@@ -59,7 +62,10 @@ export function parsePaymentHeader(header: string | undefined): ParsedPayment {
     const obj = JSON.parse(value) as Record<string, unknown>;
     const payload = obj["payload"] as Record<string, unknown> | undefined;
     const sig = payload?.["signature"] as string | undefined;
-    if (sig && /^0x/.test(sig)) {
+    if (sig && /^0x[0-9a-fA-F]{64}$/.test(sig)) {
+      return { txHash: sig, valid: true };
+    }
+    if (!strict && sig && /^0x/.test(sig)) {
       return { txHash: sig, valid: true };
     }
   } catch {
@@ -72,7 +78,7 @@ export function parsePaymentHeader(header: string | undefined): ParsedPayment {
   }
 
   // Stub-friendly: any 0x-prefixed string
-  if (/^0x/.test(value)) {
+  if (!strict && /^0x/.test(value)) {
     return { txHash: value, valid: true };
   }
 

@@ -1,4 +1,4 @@
-import { callGatewayStub } from "./gateway-client";
+import { callGateway } from "./gateway-client";
 import {
   decide,
   GATEWAY_SYSTEM_PROMPT,
@@ -41,7 +41,7 @@ function makeHandlers(
   return {
     approve_payment: async (args) => {
       const amount = Number(args.amountUSDC ?? req.requiredPaymentUSDC);
-      const gw = await callGatewayStub(req.target);
+      const gw = await callGateway(req.target);
       onGatewayResult(gw.statusCode, gw.success);
       if (!gw.success) {
         return {

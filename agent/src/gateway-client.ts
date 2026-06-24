@@ -1,6 +1,7 @@
 import * as http from "node:http";
 import { URL } from "node:url";
 
+import { transferUsdc } from "./usdc-pay";
 import { withRetry } from "./utils";
 
 /** Fake 32-byte txHash — accepted by gateway stub verifier. */
@@ -11,11 +12,26 @@ export interface GatewayCallResult {
   statusCode?: number;
   body?: unknown;
   error?: string;
+  paymentTxHash?: string;
+}
+
+interface X402Accept {
+  payTo?: string;
+  maxAmountRequired?: string;
+}
+
+interface X402Body {
+  accepts?: X402Accept[];
+}
+
+function getAgentMode(): "stub" | "live" {
+  const mode = (process.env.AGENT_DEMO_MODE ?? "stub").toLowerCase();
+  return mode === "live" ? "live" : "stub";
 }
 
 function requestOnce(
   targetUrl: string,
-  withPayment: boolean,
+  paymentHeader?: string,
 ): Promise<GatewayCallResult> {
   const parsed = new URL(targetUrl);
   const port = parsed.port
@@ -27,7 +43,7 @@ function requestOnce(
   const headers: http.OutgoingHttpHeaders = {
     accept: "application/json",
   };
-  if (withPayment) headers["x-payment"] = STUB_TX_HASH;
+  if (paymentHeader) headers["x-payment"] = paymentHeader;
 
   return new Promise((resolve) => {
     const req = http.request(
@@ -50,13 +66,11 @@ function requestOnce(
             /* keep raw text */
           }
           const code = res.statusCode ?? 0;
-          // Gateway accepted payment if not 402 (upstream 404 is OK for demo)
-          const paymentAccepted = code !== 402;
           resolve({
-            success: paymentAccepted && code < 500,
+            success: code !== 402 && code < 500,
             statusCode: code,
             body,
-            error: paymentAccepted ? undefined : `HTTP ${code}`,
+            error: code === 402 ? `HTTP ${code}` : undefined,
           });
         });
       },
@@ -68,28 +82,35 @@ function requestOnce(
   });
 }
 
-/**
- * Call x-gate in stub mode: send GET with fake X-Payment header.
- * Retries once on network error.
- */
-export async function callGatewayStub(
+function parseX402Payment(body: unknown): {
+  payTo: `0x${string}`;
+  amountMicro: bigint;
+} | null {
+  if (!body || typeof body !== "object") return null;
+  const accepts = (body as X402Body).accepts;
+  const first = accepts?.[0];
+  if (!first?.payTo || !first.maxAmountRequired) return null;
+  try {
+    return {
+      payTo: first.payTo as `0x${string}`,
+      amountMicro: BigInt(first.maxAmountRequired),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function callGatewayStubMode(
   targetUrl: string,
 ): Promise<GatewayCallResult> {
-  const mode = process.env.AGENT_DEMO_MODE ?? "stub";
-  if (mode !== "stub") {
-    console.warn(
-      `[gateway-client] AGENT_DEMO_MODE=${mode} — only stub is supported in demo`,
-    );
-  }
-
   console.log(`[gateway-client] GET ${targetUrl} (+ stub X-Payment)`);
 
   const result = await withRetry(
     "gateway",
     targetUrl,
     async () => {
-      const res = await requestOnce(targetUrl, true);
-      if (res.error) throw new Error(res.error);
+      const res = await requestOnce(targetUrl, STUB_TX_HASH);
+      if (res.error && res.statusCode === 402) throw new Error(res.error);
       if (!res.success) {
         throw new Error(res.error ?? `HTTP ${res.statusCode ?? "?"}`);
       }
@@ -98,4 +119,68 @@ export async function callGatewayStub(
   );
 
   return result ?? { success: false, error: "gateway call failed after retries" };
+}
+
+async function callGatewayLiveMode(
+  targetUrl: string,
+): Promise<GatewayCallResult> {
+  console.log(`[gateway-client] GET ${targetUrl} (live — real USDC)`);
+
+  const probe = await requestOnce(targetUrl);
+  if (probe.success && probe.statusCode === 200) {
+    return probe;
+  }
+  if (probe.statusCode !== 402) {
+    return {
+      success: false,
+      statusCode: probe.statusCode,
+      error: probe.error ?? `unexpected HTTP ${probe.statusCode ?? "?"}`,
+    };
+  }
+
+  const payment = parseX402Payment(probe.body);
+  if (!payment) {
+    return { success: false, error: "402 response missing x402 payment fields" };
+  }
+
+  console.log(
+    `[gateway-client] paying ${payment.amountMicro} micro-USDC → ${payment.payTo.slice(0, 10)}…`,
+  );
+
+  const paymentTxHash = await transferUsdc(payment.payTo, payment.amountMicro);
+  if (!paymentTxHash) {
+    return { success: false, error: "USDC transfer failed — check wallet balance" };
+  }
+
+  const paid = await withRetry(
+    "gateway",
+    `${targetUrl} (paid)`,
+    async () => {
+      const res = await requestOnce(targetUrl, paymentTxHash);
+      if (res.statusCode === 402) throw new Error("payment not accepted yet");
+      if (!res.success) {
+        throw new Error(res.error ?? `HTTP ${res.statusCode ?? "?"}`);
+      }
+      return { ...res, paymentTxHash };
+    },
+  );
+
+  return (
+    paid ?? {
+      success: false,
+      error: "gateway rejected payment after USDC transfer",
+      paymentTxHash,
+    }
+  );
+}
+
+/**
+ * Call x-gate paid API. stub = fake X-Payment; live = real USDC transfer + tx hash.
+ */
+export async function callGateway(
+  targetUrl: string,
+): Promise<GatewayCallResult> {
+  return getAgentMode() === "live"
+    ? callGatewayLiveMode(targetUrl)
+    : callGatewayStubMode(targetUrl);
 }

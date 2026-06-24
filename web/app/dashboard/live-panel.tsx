@@ -351,7 +351,17 @@ export default function LivePanel() {
                         color: "var(--c-green)",
                       }}
                     >
-                      cd agent && npm run scenarios
+                      npm run demo:pitch
+                    </code>
+                    {" "}or{" "}
+                    <code
+                      className="px-1"
+                      style={{
+                        background: "var(--c-border)",
+                        color: "var(--c-green)",
+                      }}
+                    >
+                      cd agent && npm run scenarios -- --case=1
                     </code>
                   </td>
                 </tr>
@@ -400,9 +410,20 @@ export default function LivePanel() {
                       className="py-2 font-mono text-[10px]"
                       style={{ color: "var(--c-green-dim)" }}
                     >
-                      {log.txHash
-                        ? `${log.txHash.slice(0, 10)}…${log.txHash.slice(-4)}`
-                        : "—"}
+                      {log.txHash ? (
+                        <a
+                          href={`https://sepolia.basescan.org/tx/${log.txHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:underline"
+                          style={{ color: "var(--c-cyan)" }}
+                          title={log.txHash}
+                        >
+                          {log.txHash.slice(0, 10)}…{log.txHash.slice(-4)}
+                        </a>
+                      ) : (
+                        "—"
+                      )}
                     </td>
                   </tr>
                 ))
