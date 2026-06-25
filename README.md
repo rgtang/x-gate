@@ -316,8 +316,19 @@ Open **Dashboard → CAP Orders** for the latest order + receipt links.
 | `NEXT_PUBLIC_CONTRACT_ADDRESS` | Required for Audit tab |
 | `NEXT_PUBLIC_AGENT_ADDRESS` | Filter by payer (optional) |
 | `NEXT_PUBLIC_DEPLOY_BLOCK` | Faster log scan (optional) |
-| `NEXT_PUBLIC_BASE_SEPOLIA_RPC` | Default: public Base Sepolia RPC |
+| `NEXT_PUBLIC_BASE_SEPOLIA_RPC` | Alchemy/Infura Base Sepolia URL (faster Audit tab) |
 | `NEXT_PUBLIC_EXPLORER_URL` | Default: sepolia.basescan.org |
+
+**Vercel — Audit tab speed (no code change):** Settings → Environment Variables → Production:
+
+| Variable | Value |
+|----------|--------|
+| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `0x2d29bFa1bd917CB38D9CE796BE40073B080AAbB0` |
+| `NEXT_PUBLIC_DEPLOY_BLOCK` | `43123405` (PaymentReceipt deploy block) |
+| `NEXT_PUBLIC_AGENT_ADDRESS` | Your agent wallet (`ReceiptIssued` payer), e.g. same as `WALLET_ADDRESS` in agent/.env |
+| `NEXT_PUBLIC_BASE_SEPOLIA_RPC` | `https://base-sepolia.g.alchemy.com/v2/<key>` or Infura equivalent |
+
+Redeploy after saving. Without `DEPLOY_BLOCK`, Audit scans ~50k blocks on every load.
 
 </details>
 

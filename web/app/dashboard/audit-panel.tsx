@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import {
+  DashboardCard,
+  StatCard,
+  StatusBadge,
+  type StatusKind,
+} from "./dashboard-ui";
+
 interface ChainReceipt {
   payer: string;
   payee: string;
@@ -23,49 +30,17 @@ const EXPLORER =
   process.env.NEXT_PUBLIC_EXPLORER_URL ?? "https://sepolia.basescan.org";
 const CONTRACT = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "";
 
-function StatCard({
-  label,
-  value,
-  accent,
-  sub,
-}: {
-  label: string;
-  value: string | number;
-  accent: string;
-  sub?: string;
-}) {
-  return (
-    <div className="border border-[var(--c-border-bright)] bg-[var(--c-surface)] p-4 flex flex-col gap-1">
-      <span
-        className="text-[9px] tracking-[0.25em] uppercase"
-        style={{ color: "var(--c-green-dim)" }}
-      >
-        {label}
-      </span>
-      <span className={`text-3xl font-bold tabular-nums leading-none ${accent}`}>
-        {value}
-      </span>
-      {sub && (
-        <span className="text-[9px]" style={{ color: "var(--c-green-dim)" }}>
-          {sub}
-        </span>
-      )}
-    </div>
-  );
+/** [v2] map on-chain action → semantic badge kind */
+function actionKind(action: ChainReceipt["action"]): StatusKind {
+  if (action === "pay") return "pay_for_service";
+  if (action === "skip") return "record_only";
+  return "record_only";
 }
 
-function ActionPill({ action }: { action: ChainReceipt["action"] }) {
-  const color =
-    action === "pay"
-      ? "var(--c-green)"
-      : action === "skip"
-        ? "var(--c-yellow)"
-        : "var(--c-green-dim)";
-  return (
-    <span className="font-bold text-[10px] uppercase" style={{ color }}>
-      {action}
-    </span>
-  );
+function actionLabel(action: ChainReceipt["action"]): string {
+  if (action === "pay") return "Pay";
+  if (action === "skip") return "Skip";
+  return "Unknown";
 }
 
 export default function AuditPanel() {
@@ -101,7 +76,7 @@ export default function AuditPanel() {
 
   if (loading) {
     return (
-      <p className="text-[11px] py-12 text-center" style={{ color: "var(--c-green-dim)" }}>
+      <p className="text-sm py-12 text-center text-slate-400">
         Loading on-chain receipts…
       </p>
     );
@@ -109,16 +84,13 @@ export default function AuditPanel() {
 
   if (!data?.contractConfigured) {
     return (
-      <div
-        className="border p-8 text-center text-[11px] space-y-2"
-        style={{ borderColor: "var(--c-border-bright)" }}
-      >
-        <p style={{ color: "var(--c-yellow)" }}>
+      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 text-center space-y-2">
+        <p className="text-sm text-red-500">
           NEXT_PUBLIC_CONTRACT_ADDRESS not configured
         </p>
-        <p style={{ color: "var(--c-green-dim)" }}>
-          Set your PaymentReceipt address in web/.env.local, then run{" "}
-          <code>npm run scenarios</code> in agent/
+        <p className="text-sm text-slate-400">
+          Set PaymentReceipt in web/.env.local, then run{" "}
+          <code className="text-indigo-400">npm run scenarios</code> in agent/
         </p>
       </div>
     );
@@ -126,22 +98,14 @@ export default function AuditPanel() {
 
   return (
     <div className="space-y-4">
-      {data?.error && (
-        <div
-          className="border px-4 py-3 text-[11px]"
-          style={{
-            borderColor: "var(--c-red)",
-            color: "var(--c-red)",
-          }}
-        >
+      {data?.error ? (
+        <div className="rounded-lg border border-red-500/40 bg-red-500/10 p-6 text-sm text-red-500">
           RPC error: {data.error}
         </div>
-      )}
+      ) : null}
 
-      <div
-        className="border px-4 py-2 text-[10px] flex flex-wrap gap-x-4 gap-y-1"
-        style={{ borderColor: "var(--c-border)", color: "var(--c-green-dim)" }}
-      >
+      {/* [v2] contract meta bar */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-400">
         <span>
           Contract:{" "}
           {CONTRACT ? (
@@ -149,7 +113,7 @@ export default function AuditPanel() {
               href={`${EXPLORER}/address/${CONTRACT}`}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "var(--c-cyan)" }}
+              className="text-indigo-400 hover:text-indigo-300"
             >
               {CONTRACT.slice(0, 10)}…{CONTRACT.slice(-6)}
             </a>
@@ -157,30 +121,27 @@ export default function AuditPanel() {
             "—"
           )}
         </span>
-        <span>Refreshes every 60s · pay AND skip recorded on-chain</span>
+        <span>Refreshes every 60s · pay and skip on-chain</span>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* [v2] four StatCards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
-          label="Total Decisions"
           value={receipts.length}
-          accent="text-[var(--c-green)]"
+          label="Total Decisions"
           sub={`${pays.length} pay · ${skips.length} skip`}
         />
         <StatCard
-          label="Pay Decisions"
           value={pays.length}
-          accent="text-[var(--c-cyan)]"
+          label="Pay Decisions"
           sub={`$${totalUsdc.toFixed(4)} USDC logged`}
         />
         <StatCard
-          label="Skip Decisions"
           value={skips.length}
-          accent="text-[var(--c-yellow)]"
-          sub="declined by LLM"
+          label="Skip Decisions"
+          sub="declined by policy"
         />
         <StatCard
-          label="Last Event"
           value={
             receipts[0]
               ? new Date(receipts[0].timestamp * 1000).toLocaleTimeString(
@@ -189,36 +150,21 @@ export default function AuditPanel() {
                 )
               : "—"
           }
-          accent="text-[var(--c-green)]"
+          label="Last Event"
           sub="on-chain timestamp"
         />
       </div>
 
-      <div
-        className="border p-4"
-        style={{
-          borderColor: "var(--c-border-bright)",
-          background: "var(--c-surface)",
-        }}
+      {/* [v2] decision log table */}
+      <DashboardCard
+        title={`Agent Decision Log · latest ${Math.min(receipts.length, 20)}`}
       >
-        <p
-          className="text-[9px] tracking-[0.25em] uppercase mb-3"
-          style={{ color: "var(--c-green-dim)" }}
-        >
-          Agent Decision Log // latest {Math.min(receipts.length, 20)}
-        </p>
         <div className="overflow-x-auto">
-          <table className="w-full text-[11px] border-collapse">
+          <table className="w-full text-sm">
             <thead>
-              <tr
-                className="border-b text-[9px] tracking-[0.2em] uppercase"
-                style={{
-                  borderColor: "var(--c-border)",
-                  color: "var(--c-green-dim)",
-                }}
-              >
+              <tr className="border-b border-slate-800 text-xs text-slate-400">
                 {["Time", "Action", "Reason", "Amount", "TX"].map((h) => (
-                  <th key={h} className="text-left py-2 pr-4 font-normal">
+                  <th key={h} className="text-left py-3 pr-4 font-medium">
                     {h}
                   </th>
                 ))}
@@ -229,8 +175,7 @@ export default function AuditPanel() {
                 <tr>
                   <td
                     colSpan={5}
-                    className="py-8 text-center"
-                    style={{ color: "var(--c-border-bright)" }}
+                    className="py-8 text-center text-sm text-slate-500"
                   >
                     No on-chain events yet
                   </td>
@@ -239,46 +184,40 @@ export default function AuditPanel() {
                 receipts.slice(0, 20).map((r) => (
                   <tr
                     key={r.txHash + r.timestamp}
-                    className="border-b"
-                    style={{ borderColor: "var(--c-border)" }}
+                    className="border-b border-slate-800/80"
                   >
-                    <td
-                      className="py-2 pr-4 tabular-nums whitespace-nowrap"
-                      style={{ color: "var(--c-green-dim)" }}
-                    >
+                    <td className="py-3 pr-4 tabular-nums text-slate-400 whitespace-nowrap">
                       {new Date(r.timestamp * 1000).toLocaleString("en-US", {
                         hour12: false,
                       })}
                     </td>
-                    <td className="py-2 pr-4">
-                      <ActionPill action={r.action} />
+                    <td className="py-3 pr-4">
+                      <StatusBadge
+                        kind={actionKind(r.action)}
+                        label={actionLabel(r.action)}
+                      />
                     </td>
                     <td
-                      className="py-2 pr-4 max-w-[280px] truncate"
-                      style={{ color: "var(--c-green)" }}
+                      className="py-3 pr-4 max-w-[280px] truncate text-slate-200"
                       title={r.reason}
                     >
                       {r.reason || r.memo}
                     </td>
-                    <td
-                      className="py-2 pr-4 tabular-nums"
-                      style={{ color: "var(--c-cyan)" }}
-                    >
+                    <td className="py-3 pr-4 tabular-nums text-slate-200">
                       {r.action === "pay" ? `$${r.amount.toFixed(4)}` : "—"}
                     </td>
-                    <td className="py-2">
+                    <td className="py-3 pr-4">
                       {r.txHash ? (
                         <a
                           href={`${EXPLORER}/tx/${r.txHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-[10px]"
-                          style={{ color: "var(--c-cyan)" }}
+                          className="text-indigo-400 hover:text-indigo-300 text-xs"
                         >
                           {r.txHash.slice(0, 10)}…
                         </a>
                       ) : (
-                        "—"
+                        <span className="text-slate-500">—</span>
                       )}
                     </td>
                   </tr>
@@ -287,7 +226,7 @@ export default function AuditPanel() {
             </tbody>
           </table>
         </div>
-      </div>
+      </DashboardCard>
     </div>
   );
 }

@@ -12,6 +12,13 @@ import {
   YAxis,
 } from "recharts";
 
+import {
+  DashboardCard,
+  StatCard,
+  StatusBadge,
+  type StatusKind,
+} from "./dashboard-ui";
+
 interface PerSecondData {
   second: number;
   paid: number;
@@ -64,49 +71,17 @@ function fmtTime(ts: number) {
   });
 }
 
-function StatCard({
-  label,
-  value,
-  accent,
-  sub,
-}: {
-  label: string;
-  value: string | number;
-  accent: string;
-  sub?: string;
-}) {
-  return (
-    <div className="border border-[var(--c-border-bright)] bg-[var(--c-surface)] p-4 flex flex-col gap-1">
-      <span
-        className="text-[9px] tracking-[0.25em] uppercase"
-        style={{ color: "var(--c-green-dim)" }}
-      >
-        {label}
-      </span>
-      <span className={`text-3xl font-bold tabular-nums leading-none ${accent}`}>
-        {value}
-      </span>
-      {sub && (
-        <span className="text-[9px]" style={{ color: "var(--c-green-dim)" }}>
-          {sub}
-        </span>
-      )}
-    </div>
-  );
+/** [v2] map gateway log status → semantic badge kind */
+function logStatusKind(status: RequestLog["status"]): StatusKind {
+  if (status === "paid") return "pay_for_service";
+  if (status === "blocked") return "trigger_alert";
+  return "record_only";
 }
 
-function StatusPill({ status }: { status: RequestLog["status"] }) {
-  const map = {
-    paid: { label: "PAID", color: "var(--c-green)" },
-    blocked: { label: "BLOCKED", color: "var(--c-red)" },
-    free: { label: "FREE", color: "var(--c-yellow)" },
-  } as const;
-  const { label, color } = map[status];
-  return (
-    <span className="font-bold text-[10px]" style={{ color }}>
-      {label}
-    </span>
-  );
+function logStatusLabel(status: RequestLog["status"]): string {
+  if (status === "paid") return "Paid";
+  if (status === "blocked") return "Blocked";
+  return "Free";
 }
 
 export default function LivePanel() {
@@ -147,179 +122,122 @@ export default function LivePanel() {
 
   return (
     <div className="space-y-4">
-      <div
-        className="border px-4 py-2 flex flex-wrap items-center justify-between gap-2 text-[10px]"
-        style={{ borderColor: "var(--c-border)", color: "var(--c-green-dim)" }}
-      >
-        <span>
+      {/* [v2] meta bar — text-sm body, indigo link accent */}
+      <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 flex flex-wrap items-center justify-between gap-4">
+        <p className="text-sm text-slate-400">
           Gateway admin:{" "}
-          <code style={{ color: "var(--c-cyan)" }}>{ADMIN_URL}</code>
-        </span>
-        <span className="flex items-center gap-2">
+          <code className="text-indigo-400">{ADMIN_URL}</code>
+        </p>
+        <div className="flex items-center gap-3 text-sm">
           <span
-            className="w-2 h-2 rounded-full inline-block"
-            style={{
-              background: connected ? "var(--c-green-bright)" : "var(--c-red)",
-              boxShadow: connected ? "0 0 6px var(--c-green-bright)" : "none",
-            }}
-          />
-          <span style={{ color: connected ? "var(--c-green)" : "var(--c-red)" }}>
-            {connected ? "SSE LIVE" : "SSE OFFLINE"}
+            className={`inline-flex items-center gap-2 ${
+              connected ? "text-indigo-400" : "text-red-500"
+            }`}
+          >
+            <span
+              className={`h-2 w-2 rounded-full ${
+                connected ? "bg-indigo-500" : "bg-red-500"
+              }`}
+            />
+            {connected ? "SSE Live" : "SSE Offline"}
           </span>
-          {lastTs && (
-            <span className="tabular-nums">
+          {lastTs ? (
+            <span className="text-slate-400 tabular-nums">
               {new Date(lastTs).toLocaleTimeString()}
             </span>
-          )}
-        </span>
+          ) : null}
+        </div>
       </div>
 
-      <p
-        className="text-[9px] tracking-[0.15em] uppercase"
-        style={{ color: "var(--c-green-dim)" }}
-      >
-        HTTP gateway traffic — paid / blocked / free requests (in-memory, resets on
-        gateway restart)
+      <p className="text-sm text-slate-400">
+        HTTP gateway traffic — in-memory stats, resets on gateway restart
       </p>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* [v2] four StatCards — gap-4 grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard
-          label="Paid Requests"
           value={stats.totalPaid}
-          accent="text-[var(--c-green)]"
+          label="Paid Requests"
           sub={`${paidPct}% of total`}
         />
+        <StatCard value={stats.totalBlocked} label="Blocked (402)" />
         <StatCard
-          label="Blocked (402)"
-          value={stats.totalBlocked}
-          accent="text-[var(--c-red)]"
-        />
-        <StatCard
-          label="Free Pass"
           value={stats.totalFree}
-          accent="text-[var(--c-yellow)]"
+          label="Free Pass"
           sub="/bypass & /health"
         />
         <StatCard
-          label="Revenue (USDC)"
           value={`$${stats.totalRevenue.toFixed(4)}`}
-          accent="text-[var(--c-cyan)]"
+          label="Revenue (USDC)"
           sub="simulated"
         />
       </div>
 
-      <div
-        className="border p-4"
-        style={{
-          borderColor: "var(--c-border-bright)",
-          background: "var(--c-surface)",
-        }}
-      >
-        <p
-          className="text-[9px] tracking-[0.25em] uppercase mb-4"
-          style={{ color: "var(--c-green-dim)" }}
-        >
-          Traffic // Last 60 Seconds
-        </p>
+      {/* [v2] chart card — indigo paid line, red blocked (alert only) */}
+      <DashboardCard title="Traffic · Last 60 Seconds">
         <ResponsiveContainer width="100%" height={200}>
           <LineChart
             data={chartData}
             margin={{ top: 4, right: 8, bottom: 0, left: -24 }}
           >
             <CartesianGrid
-              strokeDasharray="1 4"
-              stroke="var(--c-border)"
+              strokeDasharray="3 3"
+              stroke="#334155"
               vertical={false}
             />
             <XAxis
               dataKey="t"
-              stroke="var(--c-border-bright)"
-              tick={{
-                fill: "var(--c-green-dim)",
-                fontSize: 8,
-                fontFamily: "monospace",
-              }}
+              stroke="#475569"
+              tick={{ fill: "#94a3b8", fontSize: 12 }}
               interval={9}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="var(--c-border-bright)"
-              tick={{
-                fill: "var(--c-green-dim)",
-                fontSize: 8,
-                fontFamily: "monospace",
-              }}
+              stroke="#475569"
+              tick={{ fill: "#94a3b8", fontSize: 12 }}
               tickLine={false}
               axisLine={false}
               allowDecimals={false}
             />
             <Tooltip
               contentStyle={{
-                background: "#080808",
-                border: "1px solid var(--c-border-bright)",
-                borderRadius: 0,
-                fontSize: 10,
-                fontFamily: "monospace",
-                color: "var(--c-green)",
+                background: "#0f172a",
+                border: "1px solid #334155",
+                borderRadius: 8,
+                fontSize: 12,
+                color: "#e2e8f0",
               }}
-              labelStyle={{ color: "var(--c-green-dim)", marginBottom: 2 }}
-              itemStyle={{ color: "var(--c-green)" }}
-              cursor={{
-                stroke: "var(--c-border-bright)",
-                strokeDasharray: "3 3",
-              }}
+              labelStyle={{ color: "#94a3b8", marginBottom: 4 }}
+              cursor={{ stroke: "#475569", strokeDasharray: "3 3" }}
             />
-            <Legend
-              wrapperStyle={{
-                fontSize: 9,
-                fontFamily: "monospace",
-                color: "var(--c-green-dim)",
-                textTransform: "uppercase",
-                letterSpacing: "0.15em",
-              }}
-            />
+            <Legend wrapperStyle={{ fontSize: 12, color: "#94a3b8" }} />
             <Line
               type="monotone"
               dataKey="paid"
-              stroke="var(--c-green-bright)"
-              strokeWidth={1.5}
+              name="Paid"
+              stroke="#6366f1"
+              strokeWidth={2}
               dot={false}
             />
             <Line
               type="monotone"
               dataKey="blocked"
-              stroke="var(--c-red)"
-              strokeWidth={1.5}
+              name="Blocked"
+              stroke="#ef4444"
+              strokeWidth={2}
               dot={false}
             />
           </LineChart>
         </ResponsiveContainer>
-      </div>
+      </DashboardCard>
 
-      <div
-        className="border p-4"
-        style={{
-          borderColor: "var(--c-border-bright)",
-          background: "var(--c-surface)",
-        }}
-      >
-        <p
-          className="text-[9px] tracking-[0.25em] uppercase mb-3"
-          style={{ color: "var(--c-green-dim)" }}
-        >
-          Request Log // {logs.length} recent
-        </p>
+      {/* [v2] request log table */}
+      <DashboardCard title={`Request Log · ${logs.length} recent`}>
         <div className="overflow-x-auto">
-          <table className="w-full text-[11px] border-collapse">
+          <table className="w-full text-sm">
             <thead>
-              <tr
-                className="border-b text-[9px] tracking-[0.2em] uppercase"
-                style={{
-                  borderColor: "var(--c-border)",
-                  color: "var(--c-green-dim)",
-                }}
-              >
+              <tr className="border-b border-slate-800 text-xs text-slate-400">
                 {[
                   "Time",
                   "Method",
@@ -329,7 +247,7 @@ export default function LivePanel() {
                   "Upstream",
                   "Tx Hash",
                 ].map((h) => (
-                  <th key={h} className="text-left py-2 pr-4 font-normal">
+                  <th key={h} className="text-left py-3 pr-4 font-medium">
                     {h}
                   </th>
                 ))}
@@ -338,91 +256,53 @@ export default function LivePanel() {
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="py-8 text-center text-[11px]"
-                    style={{ color: "var(--c-border-bright)" }}
-                  >
-                    Waiting for traffic… run{" "}
-                    <code
-                      className="px-1"
-                      style={{
-                        background: "var(--c-border)",
-                        color: "var(--c-green)",
-                      }}
-                    >
-                      npm run demo:pitch
-                    </code>
-                    {" "}or{" "}
-                    <code
-                      className="px-1"
-                      style={{
-                        background: "var(--c-border)",
-                        color: "var(--c-green)",
-                      }}
-                    >
-                      cd agent && npm run scenarios -- --case=1
-                    </code>
+                  <td colSpan={7} className="py-8 text-center text-sm text-slate-500">
+                    Waiting for traffic — run{" "}
+                    <code className="text-indigo-400">npm run demo:pitch</code>
                   </td>
                 </tr>
               ) : (
                 logs.map((log) => (
                   <tr
                     key={log.id}
-                    className="border-b"
-                    style={{ borderColor: "var(--c-border)" }}
+                    className="border-b border-slate-800/80"
                   >
-                    <td
-                      className="py-2 pr-4 tabular-nums whitespace-nowrap"
-                      style={{ color: "var(--c-green-dim)" }}
-                    >
+                    <td className="py-3 pr-4 tabular-nums text-slate-400 whitespace-nowrap">
                       {new Date(log.timestamp).toLocaleTimeString("en-US", {
                         hour12: false,
                       })}
                     </td>
-                    <td className="py-2 pr-4" style={{ color: "var(--c-green)" }}>
-                      {log.method}
-                    </td>
-                    <td
-                      className="py-2 pr-4 max-w-[160px] truncate"
-                      style={{ color: "var(--c-cyan)" }}
-                    >
+                    <td className="py-3 pr-4 text-slate-200">{log.method}</td>
+                    <td className="py-3 pr-4 max-w-[160px] truncate text-indigo-400">
                       {log.path}
                     </td>
-                    <td className="py-2 pr-4">
-                      <StatusPill status={log.status} />
+                    <td className="py-3 pr-4">
+                      <StatusBadge
+                        kind={logStatusKind(log.status)}
+                        label={logStatusLabel(log.status)}
+                      />
                     </td>
-                    <td
-                      className="py-2 pr-4 tabular-nums"
-                      style={{ color: "var(--c-green)" }}
-                    >
+                    <td className="py-3 pr-4 tabular-nums text-slate-200">
                       {log.amountUSDC > 0
                         ? `$${log.amountUSDC.toFixed(4)}`
                         : "—"}
                     </td>
-                    <td
-                      className="py-2 pr-4 tabular-nums"
-                      style={{ color: "var(--c-green-dim)" }}
-                    >
+                    <td className="py-3 pr-4 tabular-nums text-slate-400">
                       {log.upstreamStatus ?? "—"}
                     </td>
-                    <td
-                      className="py-2 font-mono text-[10px]"
-                      style={{ color: "var(--c-green-dim)" }}
-                    >
+                    <td className="py-3 pr-4">
                       {log.txHash ? (
                         <a
                           href={`https://sepolia.basescan.org/tx/${log.txHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="hover:underline"
-                          style={{ color: "var(--c-cyan)" }}
+                          className="text-indigo-400 hover:text-indigo-300 text-xs"
                           title={log.txHash}
                         >
                           {log.txHash.slice(0, 10)}…{log.txHash.slice(-4)}
                         </a>
                       ) : (
-                        "—"
+                        <span className="text-slate-500">—</span>
                       )}
                     </td>
                   </tr>
@@ -431,7 +311,7 @@ export default function LivePanel() {
             </tbody>
           </table>
         </div>
-      </div>
+      </DashboardCard>
     </div>
   );
 }
