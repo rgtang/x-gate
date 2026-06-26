@@ -1,352 +1,275 @@
-# X-Gate · On-Chain Micropayment API Gateway
+# **X-Gate** · Agent Store 上的 API Spending Policy
 
-> **Baseline stack for AI × paid APIs** — x402 HTTP gateway, LLM pay/skip agent,
-> on-chain decision receipts, and a dual-view dashboard.
+> **评委 30 秒结论：** Agent 拒绝付费（skip）也会 `deliverOrder` + 写 Base Sepolia receipt——不是只审计成功付款。  
+> **主路径已可跑：** `croo:demo` → `OrderCompleted` → Dashboard 可点 [0xc864…0d1e](https://sepolia.basescan.org/tx/0xc86492a7ecd10c03f34e0863717bac109f28f2b07602cd43fce2fa263f5b0d1e)（pay）与 [0x42ff…7971](https://sepolia.basescan.org/tx/0x42ffbb87101d04bcfa6ca320b9e97f98f47ccca849e4f1433cc533626f627971)（skip）。
 
-**One-liner:** Cloudflare-like payment gateway + autonomous spending-policy agent + verifiable receipts on Base Sepolia.
+## 1 · One-liner + Quick Links 🎯
 
----
+**One-liner（中文）：** 在 **CROO CAP** 上可雇佣的 Policy Agent——LLM 决策 pay / skip，仿**x402** 网关执行，**Base Sepolia** 链上审计两种结果。  
+**One-liner（EN）：** Hire **X-Gate** on CROO CAP — LLM pay/skip policy, **x402** execution, verifiable receipts on **Base Sepolia** (pay **and** skip).
 
-## Quick Links
 
-| | Link |
-|---|------|
-| **Dashboard (local)** | `http://localhost:3000/dashboard` |
-| **Landing (local)** | `http://localhost:3000/` |
-| **Contract (Base Sepolia)** | [PaymentReceipt on Basescan](https://sepolia.basescan.org/address/0x2d29bFa1bd917CB38D9CE796BE40073B080AAbB0) |
-| **Hackathon** | [CROO Agent Hackathon · DoraHacks](https://dorahacks.io/hackathon/croo-hackathon/buidl) |
-| **Agent Store** | [agent.croo.network](https://agent.croo.network) |
+|                           | 链接                                                                                                                |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Live Demo**             | *Vercel 部署中 — 本地立即可跑 ↓ §3*                                                                                        |
+| **Demo 视频**               | *DoraHacks 提交前更新 — 脚本见 [docs/demo-script.md](docs/demo-script.md)*                                                |
+| **Dashboard（本地）**         | `[http://localhost:3000/dashboard](http://localhost:3000/dashboard)`                                              |
+| **Agent Store · Service** | [agent.croo.network](https://agent.croo.network)                                                                  |
+| **PaymentReceipt**        | [0x2d29…AAbB0](https://sepolia.basescan.org/address/0x2d29bFa1bd917CB38D9CE796BE40073B080AAbB0)                   |
+| **Proof TX · pay**        | [0xc864…0d1e](https://sepolia.basescan.org/tx/0xc86492a7ecd10c03f34e0863717bac109f28f2b07602cd43fce2fa263f5b0d1e) |
+| **Proof TX · skip**       | [0x42ff…7971](https://sepolia.basescan.org/tx/0x42ffbb87101d04bcfa6ca320b9e97f98f47ccca849e4f1433cc533626f627971) |
+| **Hackathon**             | [CROO Agent Hackathon · DoraHacks](https://dorahacks.io/hackathon/croo-hackathon/buidl)                           |
 
-> Use your own contract address after Remix deploy. Run `npm run scenarios`, then open
-> **Dashboard → On-Chain Audit** for clickable TX links.
 
----
+**30 秒验收清单**
 
-## 1 · Problem & Users
-
-| Persona | Pain |
-|---------|------|
-| **API provider** | Public APIs get scraped for free; per-call billing is heavy to build |
-| **Agent operator** | Autonomous agents can overspend on low-value or duplicate calls with no audit trail |
-
-**X-Gate baseline**
-
-- **Providers** — put any HTTP API behind the gateway; unpaid traffic gets `402 Payment Required` (x402).
-- **Agents** — LLM applies budget / rate / intent rules and chooses **pay or skip** before calling the gateway.
-- **Audit** — pay **and** skip decisions are written on-chain (`PaymentReceipt.sol`), not only in local logs.
+- [ ] Agent Store 可见 Active Service（**X-Gate Policy Agent**）
+- [ ] `npm run croo:demo` → 终端 `OrderCompleted`
+- [ ] Dashboard → CAP Orders：`action` + `receiptTx`
+- [ ] Dashboard → Audit：pay **与** skip 均有 Basescan 链接
 
 ---
 
-## 2 · Solution
+## 2 · The Problem & The Solution 💡
 
-Three independent npm packages (not a monorepo):
+### 用户是谁
 
-| Package | Role |
-|---------|------|
-| `gateway/` | Reverse proxy (`:8402`) + admin API (`:8403`) |
-| `agent/` | LLM scenario runner + on-chain receipts |
-| `web/` | Next.js 15 landing + dashboard |
+**Agent 运营者**：自主 Agent 批量调付费 API，预算失控、重复请求、skip 决策无法追责。  
+**API 提供商**：流量被白嫖；按次计费 + 风控 infra 自建成本高。
 
-**Highlight:** A **skip** decision (agent declines to pay) is still recorded on-chain as `skip|reason` — not just successful payments.
+### 痛点
+
+CAP 下单后，「这 0.001 USDC 该不该花」谁负责？行业默认只记成功付款，**skip 消失在本地日志**。
+
+### **X-Gate** 解法
+
+Requester 在 Agent Store 雇佣 **X-Gate Policy Agent**（**@croo-network/sdk**）。  
+Provider 跑 LLM 7 条策略 → pay 时经 **x402** 网关 → pay / skip 均 `deliverOrder` + **PaymentReceipt**。  
+Dashboard 三 Tab，5 秒对照 CAP 订单与链上 receipt。
 
 ---
 
-## 3 · Architecture
+## 3 · Demo 🎬
+
+### 视频 & 在线体验
+
+
+| 资产       | 状态                                                 |
+| -------- | -------------------------------------------------- |
+| Demo 视频  | *录制中 · [docs/demo-script.md](docs/demo-script.md)* |
+| Live URL | *Vercel · 2026-07-05 前上线 Quick Links*              |
+
+
+### 本地 5 分钟（主路径 · CAP）
+
+```bash
+cd gateway && npm run dev          # T1
+cd agent && npm run croo:provider  # T2
+cd agent && npm run croo:check && npm run croo:demo   # T3
+cd agent && CROO_DEMO_CASE=skip npm run croo:demo     # skip 对照
+```
+
+**验收：** `OrderCompleted` → CAP Orders（`action` + `receiptTx`）→ Audit（pay + skip TX）。
+
+### 截图
+
+
+| 画面           | 路径                                    |
+| ------------ | ------------------------------------- |
+| CAP Orders   | `docs/assets/cap-orders.png` *（提交前补）* |
+| Audit · skip | `docs/assets/audit-skip.png` *（提交前补）* |
+
+
+执行层可选：`npm run demo:pitch`（**x402** · [docs/x402-demo.md](docs/x402-demo.md)）。
+
+---
+
+## 4 · How it Works ⚙️
+
+### 60 秒读懂（先看这三条）
+
+1. **输入：** Agent 运营者通过 Requester 提交 `intent · budget · target API`（CAP requirements JSON）。
+2. **核心：** Provider 用 LLM 决策 → pay 走仿 **x402** 网关 → 两种结果都写 **Base Sepolia** `PaymentReceipt`。
+3. **输出：** Dashboard 展示 CAP delivery + Basescan TX；skip 路径不调网关，但仍 deliver + receipt。
+
+**边界：** 虚线 = 链上事件/索引；实线 = 链下 HTTP / LLM / 文件日志。
+
+### 架构（Architecture · flowchart）
 
 ```mermaid
-flowchart LR
-  subgraph Agent["agent/"]
-    LLM[LLM tool-calling]
-    RC[receipt.ts · viem]
+flowchart TB
+  subgraph User["用户场景"]
+    UIN(["▶ 输入<br/>intent · budget · target API"])
+    UOUT(["◀ 输出<br/>delivery JSON · Audit receipt · Basescan"])
   end
 
-  subgraph Gateway["gateway/"]
-    PX[proxy :8402]
-    AD[admin :8403]
-    ST[(store.ts in-memory)]
+  subgraph OffChain["链下"]
+    REQ["Requester Agent<br/>croo:demo"]
+    PROV["X-Gate Provider<br/>croo:provider"]
+    LLM["LLM Policy<br/>7 rules · tool-calling"]
+    GW["x402 Gateway<br/>:8402"]
+    WEB["Dashboard<br/>CAP / Audit / Live"]
   end
 
-  subgraph Chain["Base Sepolia"]
-    PR[(PaymentReceipt.sol)]
+  subgraph OnChain["链上 · Base Sepolia"]
+    CAP["CROO CAP<br/>payOrder · deliverOrder"]
+    REC["PaymentReceipt<br/>issueReceipt"]
   end
 
-  subgraph Web["web/"]
-    DASH["/dashboard"]
-    SSE["/api/logs"]
-    AUD["/api/audit"]
-  end
-
-  LLM -->|pay: X-Payment stub| PX
-  PX -->|402 or 200| LLM
-  PX --> ST
-  AD --> ST
-  RC -->|issueReceipt| PR
-  SSE --> AD
-  AUD --> PR
-  DASH --> SSE
-  DASH --> AUD
+  UIN -->|"hire · negotiateOrder"| REQ
+  REQ <-->|"negotiate · pay · deliver"| CAP
+  CAP -->|"OrderPaid"| PROV
+  PROV -->|"runPolicyDecision"| LLM
+  LLM -->|"approve_payment"| PROV
+  PROV -->|"GET + X-Payment"| GW
+  GW -->|"200 JSON"| PROV
+  PROV -->|"issueReceipt pay|reason"| REC
+  PROV -->|"deliverOrder + receiptTx"| CAP
+  CAP -->|"OrderCompleted"| REQ
+  REC -.->|"ReceiptIssued"| WEB
+  CAP -.->|"cap-orders.json"| WEB
+  WEB --> UOUT
 ```
 
-**Pay flow**
 
-1. LLM calls `approve_payment` → GET with stub `X-Payment` header.
-2. Gateway stub-verifier accepts → JSON response (builtin demo API or upstream).
-3. Agent writes `issueReceipt(payee, amount, "pay|…")` on Base Sepolia.
-4. Dashboard **On-Chain Audit** shows the event with Basescan links.
 
-**Skip flow** — no HTTP to gateway; agent still writes `skip|…` on-chain.
+### 核心流程（Core Flow · pay · sequenceDiagram）
 
----
+```mermaid
+sequenceDiagram
+  actor Op as Agent 运营者
+  participant Req as Requester Agent
+  participant CAP as CROO CAP
+  participant Prov as X-Gate Provider
+  participant LLM as LLM Policy
+  participant GW as x402 Gateway
+  participant Chain as Base Sepolia
 
-## 4 · Demo
+  Op->>Req: 运行 croo:demo · requirements JSON
+  Req->>CAP: negotiateOrder(serviceId, intent, budget, target)
+  CAP->>Prov: NegotiationCreated
+  Prov->>CAP: acceptNegotiation
+  Req->>CAP: payOrder (testnet USDC)
+  Note over CAP,Chain: USDC 结算写入 Base Sepolia
+  CAP->>Prov: OrderPaid
+  Prov->>LLM: decide(scenario, budget, history)
+  LLM->>LLM: evaluate(CoT · budget · rate · intent match)
+  LLM->>Prov: tool approve_payment(reason, amount)
+  Prov->>GW: GET /api/market/eth-price + X-Payment
+  GW-->>Prov: 200 JSON (spot price)
+  Prov->>Chain: issueReceipt(payee, amount, pay|reason)
+  Note right of Chain: PaymentReceipt.sol · ReceiptIssued
+  Prov->>CAP: deliverOrder(action, receiptTx, capOrderId)
+  CAP->>Req: OrderCompleted
+  Req-->>Op: 终端 delivery JSON + Basescan 链接
 
-### Prerequisites
-
-- Node.js 20+
-- `LLM_API_KEY` (DeepSeek or any OpenAI-compatible API)
-- Base Sepolia wallet + deployed `PaymentReceipt.sol` (optional; required for Audit tab)
-
-### Quick run
-
-```bash
-# Terminal 1 — gateway
-cd gateway && cp .env.example .env && npm install && npm run dev
-
-# Terminal 2 — dashboard
-cd web && cp .env.local.example .env.local && npm install && npm run dev
-
-# Terminal 3 — one pay case (gateway must be running)
-cd agent && cp .env.example .env   # LLM_API_KEY + PAYMENT_RECEIPT_ADDRESS
-npm install && npm run scenarios -- --case=1
+  Note over Op,Chain: 用户最终看到：Dashboard CAP Orders 含 action/receiptTx · Audit Tab 可点 TX · Gateway Live 有 PAID 行
 ```
 
-Open `http://localhost:3000/dashboard` → **On-Chain Audit**.
 
-> **Port conflicts:** set `PROXY_PORT` / `ADMIN_PORT` in `gateway/.env` and matching
-> `GATEWAY_ADMIN_URL` in `web/.env.local` (e.g. `8412` / `8413`).
 
-### Agent scenarios (5 cases)
+**skip 差异（一行）：** LLM 调用 `decline_payment` → 跳过 Gateway → 仍 `issueReceipt(skip|reason)` + `deliverOrder`。
 
-| # | Name | Expected | Rule tested |
-|---|------|----------|-------------|
-| 1 | `high-value-first-call` | **pay** | Clear intent + budget OK |
-| 2 | `hourly-limit-hit` | **skip** | `callsThisHour >= maxCallsPerHour` |
-| 3 | `budget-nearly-empty` | **skip** | `remainingDailyUSDC < 0.05` |
-| 4 | `duplicate-within-cooldown` | **skip** | Same URL paid within `cooldownSec` |
-| 5 | `intent-path-mismatch` | **skip** | Intent doesn't match API path |
-
-### Mechanical demo (no LLM)
-
-```bash
-cd gateway && npm run demo   # 10 requests, 5 with fake X-Payment
-```
-
-Shows traffic in **Dashboard → Gateway Live** (HTTP hits only; skip cases do not appear there).
-
-### CROO CAP demo (Week 1 — `feat/croo-cap-minimal`)
-
-Three terminals — **Provider 与 Requester 必须是 Dashboard 里两个不同的 Agent**（两个 SDK Key）:
-
-```bash
-# T1 — gateway (match GATEWAY_BASE_URL / ADMIN_PORT in agent & web env)
-cd gateway && npm run dev
-
-# T2 — CAP policy provider (listens for negotiations)
-cd agent && npm run croo:provider
-
-# T3 — requester demo (default: pay case)
-cd agent && npm run croo:demo
-
-# Skip case preset
-cd agent && CROO_DEMO_CASE=skip npm run croo:demo
-```
-
-Open **Dashboard → CAP Orders** for the latest order + receipt links.
-
-**Minimum pass:** terminal shows `OrderCompleted`, delivery JSON includes `action`, `receiptTx`, and `capOrderId`.
-
-**Troubleshooting:** `cannot negotiate own service` → `CROO_SDK_KEY_REQUESTER` 必须来自另一个 Agent，不能和 Provider 相同。先跑 `npm run croo:check`。
+细节：[docs/architecture.md](docs/architecture.md) · [docs/policy-rules.md](docs/policy-rules.md)
 
 ---
 
-## 5 · Tech Stack
+## 5 · Tech Stack 🛠
 
-| Layer | Implementation |
-|-------|----------------|
-| **Gateway** | Node.js, TypeScript, [x402](https://www.x402.org/) 402 JSON, route-based pricing |
-| **Agent** | OpenAI SDK (DeepSeek default), tool-calling, viem 2.21 |
-| **Web** | Next.js 15, Tailwind v4, recharts, SSE, server-side viem `getLogs` |
-| **Chain** | Base Sepolia — `PaymentReceipt.sol`, `MockUSDC.sol` (Remix deploy) |
-| **CROO** | `@croo-network/sdk` — CAP negotiate → pay → deliver (provider + requester demo) |
 
-**Design constraints**
+| 层级       | 技术                                                 | Why                                           |
+| -------- | -------------------------------------------------- | --------------------------------------------- |
+| Agent 协议 | **CROO CAP** · **@croo-network/sdk**               | A2A 协商 / 结算 / 交付；Policy Agent 可上架 Agent Store |
+| 执行层      | **x402** HTTP 402 + verifier                       | 任意 HTTP API 按路由 micropay；与 CAP 订单解耦           |
+| 链        | **Base Sepolia** · viem 2 · **PaymentReceipt.sol** | CROO 同链；Circle USDC；低 gas 适合高频 receipt        |
+| 策略       | OpenAI SDK · tool-calling                          | 可解释 pay/skip；7 条规则可审计                         |
+| Web      | Next.js 15 · SSE                                   | 三 Tab 实时对照 CAP 与链上事件                          |
 
-- No database — gateway stats are in-memory and reset on restart.
-- Testnet only — do not commit `.env` or use mainnet keys.
-- Each package installs and runs independently.
 
----
+### Why Sponsor Stacks（为何用这些栈，而非替代方案）
 
-## 6 · Why CROO Agent Hackathon
 
-**Target:** [CROO Agent Hackathon](https://dorahacks.io/hackathon/croo-hackathon/buidl) · deadline **2026-07-12**
+| Sponsor / 生态           | **X-Gate** 用了什么                                                           | 为什么是它                                                   |
+| ---------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **CROO · CAP**         | `negotiateOrder` → `payOrder` → `deliverOrder`；双 Agent Provider/Requester | 赛事要求 A2A 可雇佣 Agent；我们补「花钱前策略 + 花钱后 receipt」，不是 scaffold |
+| **Base · Coinbase L2** | 合约 + CAP USDC + `issueReceipt` 均在 **Base Sepolia**                        | 与 CROO 同链；USDC 原生；评委 5 秒 Basescan 验证                    |
+| **仿x402**              | Gateway `:8402` 返回 402 JSON；`X-Payment` stub/live                         | HTTP 原生 micropay 标准；Policy Agent 的执行层，可被任意 CAP 消费者复用    |
 
-**Track:** Developer Tooling Agents · Data & Verification Agents · DeFi / On-chain Ops
 
-| CROO theme | X-Gate on this branch |
-|------------|------------------------|
-| AI Agents | LLM pay/skip policy before API spend |
-| CAP / A2A | Provider service on Agent Store — requester hires via `negotiateOrder` |
-| On-chain audit | `PaymentReceipt` for pay **and** skip; delivery JSON links CAP order → receipt TX |
-| Developer tooling | x402 gateway + CAP policy agent + dashboard (Live / Audit / CAP) |
-
-**Magic moment:** Skip decisions still `deliverOrder` with `action: skip` + on-chain receipt — full verifiable audit.
+设计约束：[docs/architecture.md](docs/architecture.md#设计约束)
 
 ---
 
-## 7 · What Ships Today
+## 6 · Why Now + Why Us 🚀
 
-### `gateway/`
+### Why Now
 
-| Feature | Detail |
-|---------|--------|
-| x402 402 | Unpaid `/api/*` → JSON payment instructions (`payTo`, `amount`, `asset`) |
-| Route pricing | `/api/premium/*` vs `/api/*` rules in `config.ts` |
-| Free paths | `/bypass`, `/health` pass through without payment |
-| Stub verifier | Accepts any `0x…` `X-Payment` header (demo mode) |
-| Builtin demo API | `BUILTIN_API=true` — local JSON for `/api/*` (no httpbin dependency) |
-| Admin API | `GET /stats`, `GET /logs` — paid / blocked / free counters + request log |
-| Mechanical demo | `npm run demo` — scripted traffic |
+Agent 批量调用外部 API；Agent Store 让「雇佣专用 Agent」成为常态。  
+**x402** 让按次 HTTP 付费可行，但缺与 CAP 订单绑定的 **Policy + Receipt** 标准件。
 
-### `agent/`
+### Why Us · 差异化
 
-| Feature | Detail |
-|---------|--------|
-| LLM decisions | `approve_payment` / `decline_payment` tools with 7 policy rules |
-| Stub pay mode | `AGENT_DEMO_MODE=stub` — fake `X-Payment`, no USDC transfer |
-| Scenario runner | `npm run scenarios` — 5 cases, `--case=N` for single run |
-| On-chain receipt | `issueReceipt()` after every pay **and** skip |
-| Memo format | `pay\|reason` or `skip\|reason` (max 100 chars) |
-| CAP provider | `npm run croo:provider` — accept negotiation, policy, deliver |
-| CAP requester demo | `npm run croo:demo` — negotiate → pay → read delivery |
 
-### `web/`
+| 维度      | **X-Gate**                | 常见 CAP demo    |
+| ------- | ------------------------- | -------------- |
+| skip 处理 | deliver + 链上 `skip        | reason`        |
+| 定位      | 运行时 spending policy       | 工具链 / scaffold |
+| 验证      | 双 TX 样本 + Dashboard 三 Tab | 仅终端日志          |
 
-| Feature | Detail |
-|---------|--------|
-| Landing | `/` — how it works + demo commands |
-| Dashboard | `/dashboard` — **Gateway Live**, **On-Chain Audit**, **CAP Orders** |
-| Gateway Live | SSE poll of admin `/stats` + `/logs`; 60s traffic chart |
-| On-Chain Audit | Fetches `ReceiptIssued` events; Basescan links; 60s refresh |
-| Filter | Optional `NEXT_PUBLIC_AGENT_ADDRESS` to filter by payer |
 
-### `contracts/`
+### 团队与交付承诺（Grant Council）
 
-| Contract | Purpose |
-|----------|---------|
-| `PaymentReceipt.sol` | `issueReceipt(payee, amount, memo)` + `ReceiptIssued` event |
-| `MockUSDC.sol` | Testnet USDC for manual payment experiments |
+- **维护节奏：** 截止 2026-07-12 前每周 merge + Quick Links 更新（Live / 视频）。  
+- **公开指标：** CAP demo 连续 3 次绿 · typecheck 三 package 通过 · Audit 可点 Basescan。  
+- **Scope 诚实：** testnet + stub 默认；live USDC / CI 在 Roadmap 有日期，不夸大已上线能力。
 
 ---
 
-## 8 · Roadmap
+## 7 · Roadmap 🗺
 
-| Phase | Item | Status |
-|-------|------|--------|
-| M1 | Gateway x402 + admin stats + builtin demo API | ✅ |
-| M2 | Agent LLM scenarios (5 cases) + stub pay | ✅ |
-| M3 | `PaymentReceipt.sol` + Audit dashboard tab | ✅ |
-| M4 | Landing + dashboard tabs | ✅ |
-| **M4b** | **CROO CAP minimal integration (Week 1)** | ✅ |
-| M5 | Real USDC verifier in `gateway/verifier.ts` | ⬜ |
-| M6 | `AGENT_DEMO_MODE=live` — real x402 payment flow | ⬜ |
-| M7 | Demo video + Vercel + `demo:pitch` script | ⬜ |
-| M8 | OpenClaw skill + E2E CI | ⬜ |
+### Done（已交付 · 可验证）
 
----
 
-## 9 · Reference
+| 交付物        | 证据                                                                                                                                                                                                                                             |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CAP 闭环     | `croo:provider` · `croo:demo` · CAP Orders Tab                                                                                                                                                                                                 |
+| 链上审计       | [0xc864…0d1e](https://sepolia.basescan.org/tx/0xc86492a7ecd10c03f34e0863717bac109f28f2b07602cd43fce2fa263f5b0d1e) pay · [0x42ff…7971](https://sepolia.basescan.org/tx/0x42ffbb87101d04bcfa6ca320b9e97f98f47ccca849e4f1433cc533626f627971) skip |
+| x402 + LLM | gateway · 7 规则 · `demo:pitch`                                                                                                                                                                                                                  |
 
-### Packages & ports
 
-| Package | Port | Role |
-|---------|------|------|
-| `gateway` | 8402 | x402 reverse proxy |
-| `gateway` | 8403 | Admin `/stats`, `/logs`, `/cap-orders` |
-| `web` | 3000 | Landing + dashboard |
-| `agent` | — | Outbound LLM client |
+### Next 4 weeks（2026-06-26 → 2026-07-12 · 提交硬 deadline）
 
-### Environment variables
 
-<details>
-<summary><code>gateway/.env</code></summary>
+| 日期    | 里程碑                       | Done 标准                             |
+| ----- | ------------------------- | ----------------------------------- |
+| 07-05 | Vercel Live + Quick Links | 评委无需 clone 可开 Dashboard             |
+| 07-08 | Demo 视频 ≤3min             | DoraHacks 表单可嵌入                     |
+| 07-10 | GitHub Actions CI         | typecheck + web build + CAP smoke 绿 |
+| 07-11 | OpenClaw skill            | 赛事 OpenClaw tag 可复现                 |
+| 07-12 | BUIDL 提交                  | GitHub + 视频 + Live 三链一致             |
 
-| Key | Description |
-|-----|-------------|
-| `UPSTREAM_URL` | Upstream API (default: httpbin.org) |
-| `GATEWAY_WALLET` | `payTo` in 402 responses |
-| `PROXY_PORT` / `ADMIN_PORT` | Default `8402` / `8403` |
-| `BUILTIN_API` | `true` — local JSON for `/api/*` |
 
-</details>
+### 3–6 months（post-hackathon · 若获 Grant 延续）
 
-<details>
-<summary><code>agent/.env</code></summary>
-
-| Key | Description |
-|-----|-------------|
-| `LLM_API_KEY` | Required for scenarios |
-| `LLM_BASE_URL` / `LLM_MODEL` | Default: DeepSeek |
-| `GATEWAY_BASE_URL` | Default: `http://localhost:8402` |
-| `AGENT_DEMO_MODE` | `stub` (default) |
-| `WALLET_PRIVATE_KEY` | Testnet — signs receipts |
-| `PAYMENT_RECEIPT_ADDRESS` | Deployed contract |
-| `PAYEE_ADDRESS` | Gateway wallet on pay decisions |
-| `CROO_*` | CAP provider/requester — see `agent/.env.example` |
-
-</details>
-
-<details>
-<summary><code>web/.env.local</code></summary>
-
-| Key | Description |
-|-----|-------------|
-| `GATEWAY_ADMIN_URL` | Must match gateway `ADMIN_PORT` |
-| `NEXT_PUBLIC_GATEWAY_ADMIN_URL` | Shown in Live tab |
-| `NEXT_PUBLIC_CONTRACT_ADDRESS` | Required for Audit tab |
-| `NEXT_PUBLIC_AGENT_ADDRESS` | Filter by payer (optional) |
-| `NEXT_PUBLIC_DEPLOY_BLOCK` | Faster log scan (optional) |
-| `NEXT_PUBLIC_BASE_SEPOLIA_RPC` | Alchemy/Infura Base Sepolia URL (faster Audit tab) |
-| `NEXT_PUBLIC_EXPLORER_URL` | Default: sepolia.basescan.org |
-
-**Vercel — Audit tab speed (no code change):** Settings → Environment Variables → Production:
-
-| Variable | Value |
-|----------|--------|
-| `NEXT_PUBLIC_CONTRACT_ADDRESS` | `0x2d29bFa1bd917CB38D9CE796BE40073B080AAbB0` |
-| `NEXT_PUBLIC_DEPLOY_BLOCK` | `43123405` (PaymentReceipt deploy block) |
-| `NEXT_PUBLIC_AGENT_ADDRESS` | Your agent wallet (`ReceiptIssued` payer), e.g. same as `WALLET_ADDRESS` in agent/.env |
-| `NEXT_PUBLIC_BASE_SEPOLIA_RPC` | `https://base-sepolia.g.alchemy.com/v2/<key>` or Infura equivalent |
-
-Redeploy after saving. Without `DEPLOY_BLOCK`, Audit scans ~50k blocks on every load.
-
-</details>
-
-### Commands
-
-```bash
-cd gateway && npm run dev | start | demo | typecheck
-cd agent   && npm run scenarios | npm run croo:provider | npm run croo:demo | typecheck
-cd web     && npm run dev | build | typecheck
-```
-
-### Related
-
-- [pay-gate](https://github.com/rgtang/pay-gate) — complementary AI client side
-- [CROO Agent Protocol](https://croo.network) · [Agent Store](https://agent.croo.network)
+- Q3 2026：Gateway live USDC verifier + `AGENT_DEMO_MODE=live` 文档化  
+- Q3–Q4：可配置 policy pack · 多租户 Provider 模板  
+- Q4：E2E CI（CAP + **x402**）· 第三方安全审计 gate 主网
 
 ---
 
-## License
+## 8 · Links + Contact + License 📎
 
-MIT · Base Sepolia testnet · stub payment demo — **not production-ready**.
+
+| 资源                 | 链接                                                                          |
+| ------------------ | --------------------------------------------------------------------------- |
+| CROO Agent Store   | [agent.croo.network](https://agent.croo.network)                            |
+| CROO 协议            | [croo.network](https://croo.network)                                        |
+| **Base** · Sepolia | [sepolia.basescan.org](https://sepolia.basescan.org)                        |
+| **x402**           | [x402.org](https://www.x402.org/)                                           |
+| DoraHacks BUIDL    | [croo-hackathon/buidl](https://dorahacks.io/hackathon/croo-hackathon/buidl) |
+| 本地搭建               | [docs/setup.md](docs/setup.md)                                              |
+| Demo 录屏脚本          | [docs/demo-script.md](docs/demo-script.md)                                  |
+
+
+**Contact：** GitHub Issues · DoraHacks **X-Gate Policy Agent** · *（Telegram / X 提交前补）*  
+**License：** MIT · **Base Sepolia** testnet · stub 默认 — **非生产就绪**。
