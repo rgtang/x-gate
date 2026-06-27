@@ -1,7 +1,7 @@
 # **X-Gate** · Agent Store 上的 API Spending Policy
 
 > **评委 30 秒结论：** Agent 拒绝付费（skip）也会 `deliverOrder` + 写 Base Sepolia receipt——不是只审计成功付款。  
-> **主路径已可跑：** `croo:demo` → `OrderCompleted` → Dashboard 可点 [0xc864…0d1e](https://sepolia.basescan.org/tx/0xc86492a7ecd10c03f34e0863717bac109f28f2b07602cd43fce2fa263f5b0d1e)（pay）与 [0x42ff…7971](https://sepolia.basescan.org/tx/0x42ffbb87101d04bcfa6ca320b9e97f98f47ccca849e4f1433cc533626f627971)（skip）。
+> **主路径已可跑：** `croo:demo` → `OrderCompleted` → Dashboard 可点 [0x2d91…ee28](https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28)（pay）与 [0x8778…0d23](https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23)（skip）。
 
 ## 1 · One-liner + Quick Links 🎯
 
@@ -74,10 +74,10 @@ cd agent && CROO_DEMO_CASE=skip npm run croo:demo     # skip 对照
 ### 截图
 
 
-| 画面           | 路径                           |
-| ------------ | ---------------------------- |
-| CAP Orders   | `docs/assets/cap-orders.png` |
-| Audit · skip | `docs/assets/audit-skip.png` |
+| 画面           | 路径                    |
+| ------------ | --------------------- |
+| CAP Orders   | `docs/cap-orders.png` |
+| Audit · skip | `docs/audit-skip.png` |
 
 
 ---
@@ -230,7 +230,7 @@ Agent 批量调用外部 API；Agent Store 让「雇佣专用 Agent」成为常�
 
 | 交付物         | 证据                                                                                                                                                                                                                                                                                                                                       |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CAP 闭环      | [0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28](https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28)pay·[0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23](https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23)skip |
+| CAP 闭环      | [0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28](https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28)pay[0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23](https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23)skip |
 | 仿x402 + LLM | gateway · 多条规则 · `demo:pitch`                                                                                                                                                                                                                                                                                                            |
 
 
