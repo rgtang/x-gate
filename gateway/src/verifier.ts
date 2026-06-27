@@ -5,9 +5,8 @@ import {
   parseAbi,
   type Hex,
 } from "viem";
-import { baseSepolia } from "viem/chains";
-
 import { GATEWAY_CONFIG } from "./config";
+import { getChain } from "./chain";
 
 export interface VerificationResult {
   valid: boolean;
@@ -34,7 +33,7 @@ async function liveVerify(
   expectedMinAmount: bigint,
 ): Promise<VerificationResult> {
   const client = createPublicClient({
-    chain: baseSepolia,
+    chain: getChain(),
     transport: http(GATEWAY_CONFIG.rpcUrl),
   });
 

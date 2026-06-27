@@ -1,5 +1,15 @@
 import "dotenv/config";
-import { createProviderClient, createRequesterClient, getServiceId } from "./client";
+import {
+  createProviderClient,
+  createRequesterClient,
+  getServiceId,
+} from "./client";
+import {
+  getDefaultRpcUrl,
+  getNetwork,
+  getRpcUrl,
+  rpcMatchesNetwork,
+} from "../chain";
 
 function maskKey(key: string): string {
   if (key.length <= 12) return "(set)";
@@ -49,9 +59,19 @@ async function main(): Promise<void> {
     });
   }
 
+  const network = getNetwork();
+  const rpc = getRpcUrl();
+  const usingDefault =
+    !process.env.BASE_RPC_URL && !process.env.RPC_URL;
   checks.push({
-    ok: (process.env.BASE_RPC_URL ?? "").includes("sepolia"),
-    msg: `BASE_RPC_URL = ${process.env.BASE_RPC_URL ?? "(default — set sepolia!)"}`,
+    ok: Boolean(rpc),
+    msg: `NETWORK=${network} RPC=${rpc}${usingDefault ? ` (default ${getDefaultRpcUrl()})` : ""}`,
+  });
+  checks.push({
+    ok: rpcMatchesNetwork(rpc, network),
+    msg: rpcMatchesNetwork(rpc, network)
+      ? "NETWORK 与 RPC URL 一致 ✓"
+      : `NETWORK=${network} 与 RPC URL 不一致 — 请对齐 NETWORK 与 BASE_RPC_URL`,
   });
 
   checks.push({

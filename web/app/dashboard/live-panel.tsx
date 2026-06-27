@@ -18,6 +18,7 @@ import {
   StatusBadge,
   type StatusKind,
 } from "./dashboard-ui";
+import { txExplorerUrl } from "@/lib/chain";
 
 interface PerSecondData {
   second: number;
@@ -293,7 +294,7 @@ export default function LivePanel() {
                     <td className="py-3 pr-4">
                       {log.txHash ? (
                         <a
-                          href={`https://sepolia.basescan.org/tx/${log.txHash}`}
+                          href={txExplorerUrl(log.txHash)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-indigo-400 hover:text-indigo-300 text-xs"

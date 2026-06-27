@@ -8,6 +8,7 @@ import {
   StatusBadge,
   type StatusKind,
 } from "./dashboard-ui";
+import { getExplorerUrl } from "@/lib/chain";
 
 interface ChainReceipt {
   payer: string;
@@ -26,8 +27,7 @@ interface AuditResponse {
   contractConfigured: boolean;
 }
 
-const EXPLORER =
-  process.env.NEXT_PUBLIC_EXPLORER_URL ?? "https://sepolia.basescan.org";
+const EXPLORER = getExplorerUrl();
 const CONTRACT = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ?? "";
 
 /** [v2] map on-chain action → semantic badge kind */

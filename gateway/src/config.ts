@@ -1,3 +1,9 @@
+import {
+  getDefaultUsdcAddress,
+  getRpcUrl,
+  getX402Network,
+} from "./chain";
+
 export interface RouteRule {
   pattern: RegExp;
   priceUSDC: number;
@@ -32,10 +38,9 @@ export const GATEWAY_CONFIG = {
   upstreamUrl: process.env.UPSTREAM_URL ?? "https://httpbin.org",
   gatewayWallet:
     process.env.GATEWAY_WALLET ?? "0x0000000000000000000000000000000000000000",
-  usdcAddress:
-    process.env.USDC_ADDRESS ?? "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-  rpcUrl: process.env.RPC_URL ?? "https://sepolia.base.org",
-  network: "base-sepolia" as const,
+  usdcAddress: process.env.USDC_ADDRESS ?? getDefaultUsdcAddress(),
+  rpcUrl: getRpcUrl(),
+  network: getX402Network(),
   maxTimeoutSeconds: 300,
   /** stub = any 0x header; live = on-chain USDC Transfer verification */
   verifierMode: parseVerifierMode(),

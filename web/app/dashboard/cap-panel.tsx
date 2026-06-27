@@ -8,6 +8,7 @@ import {
   StatusBadge,
   type StatusKind,
 } from "./dashboard-ui";
+import { getExplorerUrl } from "@/lib/chain";
 
 interface CapOrder {
   orderId: string;
@@ -30,8 +31,7 @@ interface CapResponse {
   error: string | null;
 }
 
-const EXPLORER =
-  process.env.NEXT_PUBLIC_EXPLORER_URL ?? "https://sepolia.basescan.org";
+const EXPLORER = getExplorerUrl();
 
 /** [v2] CAP action → semantic badge kind */
 function capActionKind(action: string): StatusKind {

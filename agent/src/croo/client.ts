@@ -1,6 +1,8 @@
 import "dotenv/config";
 import { AgentClient, type Config } from "@croo-network/sdk";
 
+import { getRpcUrl } from "../chain";
+
 function requireEnv(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`Missing env: ${name}`);
@@ -11,7 +13,7 @@ export function crooConfig(): Config {
   return {
     baseURL: requireEnv("CROO_API_URL"),
     wsURL: requireEnv("CROO_WS_URL"),
-    rpcURL: process.env.BASE_RPC_URL ?? "https://sepolia.base.org",
+    rpcURL: getRpcUrl(),
   };
 }
 

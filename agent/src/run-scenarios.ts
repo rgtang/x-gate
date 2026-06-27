@@ -11,6 +11,7 @@
  */
 import "dotenv/config";
 
+import { txExplorerUrl } from "./chain";
 import { sleep } from "./utils";
 import {
   parseCaseFilter,
@@ -59,7 +60,7 @@ function printRow(r: ScenarioRunResult): void {
     console.log(`       ${D}gateway HTTP:${X} ${r.httpStatus}`);
   }
   if (r.receiptTx) {
-    console.log(`       ${D}receipt:${X} https://sepolia.basescan.org/tx/${r.receiptTx}`);
+    console.log(`       ${D}receipt:${X} ${txExplorerUrl(r.receiptTx)}`);
   }
   console.log("");
 }

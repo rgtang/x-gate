@@ -9,6 +9,7 @@ import {
 import Link from "next/link";
 
 import { DashboardCard } from "./dashboard/dashboard-ui";
+import { getExplorerUrl } from "@/lib/chain";
 
 const AGENT_STORE = "https://agent.croo.network";
 const HACKATHON =
@@ -16,8 +17,7 @@ const HACKATHON =
 const CONTRACT =
   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ??
   "0x2d29bFa1bd917CB38D9CE796BE40073B080AAbB0";
-const EXPLORER =
-  process.env.NEXT_PUBLIC_EXPLORER_URL ?? "https://sepolia.basescan.org";
+const EXPLORER = getExplorerUrl();
 const GITHUB = process.env.NEXT_PUBLIC_GITHUB_URL ?? "";
 
 /** [v3] CAP lifecycle — primary hackathon narrative */

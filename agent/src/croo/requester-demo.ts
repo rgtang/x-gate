@@ -10,6 +10,7 @@ import {
 } from "@croo-network/sdk";
 
 import { demoRequirements } from "../policy";
+import { getDefaultRpcUrl, txExplorerUrl } from "../chain";
 import { sleep } from "../utils";
 import { createRequesterClient, getServiceId } from "./client";
 
@@ -189,7 +190,7 @@ async function main(): Promise<void> {
       );
     } else if (isBalanceCheckError(err)) {
       console.error(
-        "[croo:demo] on-chain USDC balance check failed — confirm BASE_RPC_URL=https://sepolia.base.org and Requester AA wallet has test USDC",
+        `[croo:demo] on-chain USDC balance check failed — confirm BASE_RPC_URL=${getDefaultRpcUrl()} and Requester AA wallet has USDC`,
       );
     }
     throw err;
@@ -231,7 +232,7 @@ async function main(): Promise<void> {
       console.log(JSON.stringify(parsed, null, 2));
       if (parsed.receiptTx) {
         console.log(
-          `  audit    : https://sepolia.basescan.org/tx/${parsed.receiptTx}`,
+          `  audit    : ${txExplorerUrl(String(parsed.receiptTx))}`,
         );
       }
     } catch {
