@@ -2,12 +2,14 @@
 
 ## 包职责
 
-| 包 | 端口 | 职责 |
-|----|------|------|
-| `gateway/` | 8402 / 8403 | x402 402 代理、stub/live verifier、admin `/stats` `/logs` `/cap-orders` |
-| `agent/` | — | CAP Provider、LLM policy、`issueReceipt`、scenario / croo demo |
-| `web/` | 3000 | Landing、Dashboard（Live / Audit / CAP） |
-| `contracts/` | — | `PaymentReceipt.sol`、`MockUSDC.sol`（Remix 部署） |
+
+| 包            | 端口          | 职责                                                                   |
+| ------------ | ----------- | -------------------------------------------------------------------- |
+| `gateway/`   | 8412 / 8413 | 仿x402 402 代理、stub/live verifier、admin `/stats` `/logs` `/cap-orders` |
+| `agent/`     | —           | CAP Provider、LLM policy、`issueReceipt`、scenario / croo demo          |
+| `web/`       | 3000        | Landing、Dashboard（Live / Audit / CAP）                                |
+| `contracts/` | —           | `PaymentReceipt.sol`、`MockUSDC.sol`（Remix 部署）                        |
+
 
 ## PaymentReceipt
 
@@ -27,6 +29,7 @@
 ## 设计约束
 
 - 无 Postgres / Redis / SQLite
-- 仅 Base Sepolia testnet
+- 仅 Base
 - 三包独立 `npm install`，非 monorepo workspace
 - 默认 `AGENT_DEMO_MODE=stub`、`VERIFIER_MODE=stub`
+

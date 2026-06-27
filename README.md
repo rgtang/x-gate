@@ -9,16 +9,16 @@
 **One-liner（EN）：** Hire **X-Gate** on CROO CAP — LLM pay/skip policy, **x402** execution, verifiable receipts on **Base Sepolia** (pay **and** skip).
 
 
-|                           | 链接                                                                                                                |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Live Demo**             | *Vercel 部署中 — 本地立即可跑 ↓ §3*                                                                                        |
-| **Demo 视频**               | *DoraHacks 提交前更新 — 脚本见 [docs/demo-script.md](docs/demo-script.md)*                                                |
-| **Dashboard（本地）**         | `[http://localhost:3000/dashboard](http://localhost:3000/dashboard)`                                              |
-| **Agent Store · Service** | [agent.croo.network](https://agent.croo.network)                                                                  |
-| **PaymentReceipt**        | [0x2d29…AAbB0](https://sepolia.basescan.org/address/0x2d29bFa1bd917CB38D9CE796BE40073B080AAbB0)                   |
-| **Proof TX · pay**        | [0xc864…0d1e](https://sepolia.basescan.org/tx/0xc86492a7ecd10c03f34e0863717bac109f28f2b07602cd43fce2fa263f5b0d1e) |
-| **Proof TX · skip**       | [0x42ff…7971](https://sepolia.basescan.org/tx/0x42ffbb87101d04bcfa6ca320b9e97f98f47ccca849e4f1433cc533626f627971) |
-| **Hackathon**             | [CROO Agent Hackathon · DoraHacks](https://dorahacks.io/hackathon/croo-hackathon/buidl)                           |
+|                           | 链接                                                                                                                                                                                       |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Live Demo**             | [https://x-gate.vercel.app/](https://x-gate.vercel.app/)                                                                                                                                 |
+| **Demo 视频**               | *DoraHacks 提交前更新 — 脚本见 [docs/demo-script.md](docs/demo-script.md)*                                                                                                                       |
+| **Dashboard**             | [https://x-gate.vercel.app/dashboard](https://x-gate.vercel.app/)                                                                                                                        |
+| **Agent Store · Service** | [agent.croo.network](https://agent.croo.network)                                                                                                                                         |
+| **PaymentReceipt**        | [https://basescan.org/address/0xA1D71Fa6929D9f0605De6548f00c281a2EB40d6E](https://basescan.org/address/0xA1D71Fa6929D9f0605De6548f00c281a2EB40d6E)                                       |
+| **Proof TX · pay**        | [https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28](https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28) |
+| **Proof TX · skip**       | [https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23](https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23) |
+| **Hackathon**             | [CROO Agent Hackathon · DoraHacks](https://dorahacks.io/hackathon/croo-hackathon/buidl)                                                                                                  |
 
 
 **30 秒验收清单**
@@ -54,10 +54,10 @@ Dashboard 三 Tab，5 秒对照 CAP 订单与链上 receipt。
 ### 视频 & 在线体验
 
 
-| 资产       | 状态                                                 |
-| -------- | -------------------------------------------------- |
-| Demo 视频  | *录制中 · [docs/demo-script.md](docs/demo-script.md)* |
-| Live URL | *Vercel · 2026-07-05 前上线 Quick Links*              |
+| 资产       | 状态                                                       |
+| -------- | -------------------------------------------------------- |
+| Demo 视频  | *录制中 · [docs/demo-script.md](docs/demo-script.md)*       |
+| Live URL | [https://x-gate.vercel.app/](https://x-gate.vercel.app/) |
 
 
 ### 本地 5 分钟（主路径 · CAP）
@@ -74,13 +74,11 @@ cd agent && CROO_DEMO_CASE=skip npm run croo:demo     # skip 对照
 ### 截图
 
 
-| 画面           | 路径                                    |
-| ------------ | ------------------------------------- |
-| CAP Orders   | `docs/assets/cap-orders.png` *（提交前补）* |
-| Audit · skip | `docs/assets/audit-skip.png` *（提交前补）* |
+| 画面           | 路径                           |
+| ------------ | ---------------------------- |
+| CAP Orders   | `docs/assets/cap-orders.png` |
+| Audit · skip | `docs/assets/audit-skip.png` |
 
-
-执行层可选：`npm run demo:pitch`（**x402** · [docs/x402-demo.md](docs/x402-demo.md)）。
 
 ---
 
@@ -89,7 +87,7 @@ cd agent && CROO_DEMO_CASE=skip npm run croo:demo     # skip 对照
 ### 60 秒读懂（先看这三条）
 
 1. **输入：** Agent 运营者通过 Requester 提交 `intent · budget · target API`（CAP requirements JSON）。
-2. **核心：** Provider 用 LLM 决策 → pay 走仿 **x402** 网关 → 两种结果都写 **Base Sepolia** `PaymentReceipt`。
+2. **核心：** Provider 用 LLM 决策 → pay 走仿 **x402** 网关 → 两种结果都写 **Base** `PaymentReceipt`。
 3. **输出：** Dashboard 展示 CAP delivery + Basescan TX；skip 路径不调网关，但仍 deliver + receipt。
 
 **边界：** 虚线 = 链上事件/索引；实线 = 链下 HTTP / LLM / 文件日志。
@@ -180,9 +178,9 @@ sequenceDiagram
 | 层级       | 技术                                                 | Why                                           |
 | -------- | -------------------------------------------------- | --------------------------------------------- |
 | Agent 协议 | **CROO CAP** · **@croo-network/sdk**               | A2A 协商 / 结算 / 交付；Policy Agent 可上架 Agent Store |
-| 执行层      | **x402** HTTP 402 + verifier                       | 任意 HTTP API 按路由 micropay；与 CAP 订单解耦           |
+| 执行层      | **仿x402** HTTP 402 + verifier                      | 任意 HTTP API 按路由 micropay；与 CAP 订单解耦           |
 | 链        | **Base Sepolia** · viem 2 · **PaymentReceipt.sol** | CROO 同链；Circle USDC；低 gas 适合高频 receipt        |
-| 策略       | OpenAI SDK · tool-calling                          | 可解释 pay/skip；7 条规则可审计                         |
+| 策略       | OpenAI SDK · tool-calling                          | 可解释 pay/skip；多条规则可审计                          |
 | Web      | Next.js 15 · SSE                                   | 三 Tab 实时对照 CAP 与链上事件                          |
 
 
@@ -193,7 +191,7 @@ sequenceDiagram
 | ---------------------- | ------------------------------------------------------------------------- | ------------------------------------------------------- |
 | **CROO · CAP**         | `negotiateOrder` → `payOrder` → `deliverOrder`；双 Agent Provider/Requester | 赛事要求 A2A 可雇佣 Agent；我们补「花钱前策略 + 花钱后 receipt」，不是 scaffold |
 | **Base · Coinbase L2** | 合约 + CAP USDC + `issueReceipt` 均在 **Base Sepolia**                        | 与 CROO 同链；USDC 原生；评委 5 秒 Basescan 验证                    |
-| **仿x402**              | Gateway `:8402` 返回 402 JSON；`X-Payment` stub/live                         | HTTP 原生 micropay 标准；Policy Agent 的执行层，可被任意 CAP 消费者复用    |
+| **仿x402**              | Gateway `:8412` 返回 402 JSON；`X-Payment` stub/live                         | HTTP 原生 micropay 标准；Policy Agent 的执行层，可被任意 CAP 消费者复用    |
 
 
 设计约束：[docs/architecture.md](docs/architecture.md#设计约束)
@@ -205,7 +203,7 @@ sequenceDiagram
 ### Why Now
 
 Agent 批量调用外部 API；Agent Store 让「雇佣专用 Agent」成为常态。  
-**x402** 让按次 HTTP 付费可行，但缺与 CAP 订单绑定的 **Policy + Receipt** 标准件。
+仿**x402网关** 让按次 HTTP 付费可行，但缺与 CAP 订单绑定的 **Policy + Receipt** 标准件。
 
 ### Why Us · 差异化
 
@@ -230,11 +228,10 @@ Agent 批量调用外部 API；Agent Store 让「雇佣专用 Agent」成为常�
 ### Done（已交付 · 可验证）
 
 
-| 交付物        | 证据                                                                                                                                                                                                                                             |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| CAP 闭环     | `croo:provider` · `croo:demo` · CAP Orders Tab                                                                                                                                                                                                 |
-| 链上审计       | [0xc864…0d1e](https://sepolia.basescan.org/tx/0xc86492a7ecd10c03f34e0863717bac109f28f2b07602cd43fce2fa263f5b0d1e) pay · [0x42ff…7971](https://sepolia.basescan.org/tx/0x42ffbb87101d04bcfa6ca320b9e97f98f47ccca849e4f1433cc533626f627971) skip |
-| x402 + LLM | gateway · 7 规则 · `demo:pitch`                                                                                                                                                                                                                  |
+| 交付物         | 证据                                                                                                                                                                                                                                                                                                                                       |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CAP 闭环      | [0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28](https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28)pay·[0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23](https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23)skip |
+| 仿x402 + LLM | gateway · 多条规则 · `demo:pitch`                                                                                                                                                                                                                                                                                                            |
 
 
 ### Next 4 weeks（2026-06-26 → 2026-07-12 · 提交硬 deadline）
@@ -253,22 +250,22 @@ Agent 批量调用外部 API；Agent Store 让「雇佣专用 Agent」成为常�
 
 - Q3 2026：Gateway live USDC verifier + `AGENT_DEMO_MODE=live` 文档化  
 - Q3–Q4：可配置 policy pack · 多租户 Provider 模板  
-- Q4：E2E CI（CAP + **x402**）· 第三方安全审计 gate 主网
+- Q4：E2E CI（CAP + **x402基建**）· 第三方安全审计 gate 主网
 
 ---
 
 ## 8 · Links + Contact + License 📎
 
 
-| 资源                 | 链接                                                                          |
-| ------------------ | --------------------------------------------------------------------------- |
-| CROO Agent Store   | [agent.croo.network](https://agent.croo.network)                            |
-| CROO 协议            | [croo.network](https://croo.network)                                        |
-| **Base** · Sepolia | [sepolia.basescan.org](https://sepolia.basescan.org)                        |
-| **x402**           | [x402.org](https://www.x402.org/)                                           |
-| DoraHacks BUIDL    | [croo-hackathon/buidl](https://dorahacks.io/hackathon/croo-hackathon/buidl) |
-| 本地搭建               | [docs/setup.md](docs/setup.md)                                              |
-| Demo 录屏脚本          | [docs/demo-script.md](docs/demo-script.md)                                  |
+| 资源               | 链接                                                                          |
+| ---------------- | --------------------------------------------------------------------------- |
+| CROO Agent Store | [agent.croo.network](https://agent.croo.network)                            |
+| CROO 协议          | [croo.network](https://croo.network)                                        |
+| **Base**         | [Base (ETH) Blockchain Explorer (basescan.org)](https://basescan.org/)      |
+| **x402**         | [x402.org](https://www.x402.org/)                                           |
+| DoraHacks BUIDL  | [croo-hackathon/buidl](https://dorahacks.io/hackathon/croo-hackathon/buidl) |
+| 本地搭建             | [docs/setup.md](docs/setup.md)                                              |
+| Demo 录屏脚本        | [docs/demo-script.md](docs/demo-script.md)                                  |
 
 
 **Contact：** GitHub Issues · DoraHacks **X-Gate Policy Agent** · *（Telegram / X 提交前补）*  
