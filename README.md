@@ -59,13 +59,13 @@ open https://x-gate.vercel.app/dashboard
 ### X-Gate 解法（3 步闭环）
 
 ```mermaid
-graph LR
-  A[Requester 雇佣<br/>Policy Agent] --> B[LLM 评估<br/>7 条策略]
-  B -->|approve| C1[x402 Gateway<br/>→ USDC 支付]
-  B -->|decline| C2[跳过 API<br/>仍写 receipt]
-  C1 --> D[PaymentReceipt.sol<br/>pay|reason]
+flowchart LR
+  A["Requester 雇佣<br/>Policy Agent"] --> B["LLM 评估<br/>7 条策略"]
+  B -->|approve| C1["x402 Gateway<br/>USDC 支付"]
+  B -->|decline| C2["跳过 API<br/>仍写 receipt"]
+  C1 --> D["PaymentReceipt.sol<br/>memo: pay or skip"]
   C2 --> D
-  D --> E[CAP deliverOrder<br/>+ Basescan TX]
+  D --> E["CAP deliverOrder<br/>+ Basescan TX"]
 ```
 
 
@@ -141,7 +141,7 @@ flowchart TB
   LLM -->|approve_payment| PROV
   PROV -->|GET + X-Payment| GW
   GW -->|200 JSON| PROV
-  PROV -->|issueReceipt pay|reason| REC
+  PROV -->|issueReceipt memo| REC
   PROV -->|deliverOrder + receiptTx| CAP
   CAP -->|OrderCompleted| REQ
   REC -.->|ReceiptIssued 事件| WEB
@@ -182,7 +182,7 @@ sequenceDiagram
   LLM->>Prov: tool approve_payment(reason, amount)
   Prov->>GW: GET /api/market/eth-price + X-Payment
   GW-->>Prov: 200 JSON (spot price)
-  Prov->>Chain: issueReceipt(payee, amount, pay|reason)
+  Prov->>Chain: issueReceipt(payee, amount, pay or skip memo)
   Note right of Chain: PaymentReceipt.sol
   Prov->>CAP: deliverOrder(action, receiptTx, capOrderId)
   CAP->>Req: OrderCompleted 事件
