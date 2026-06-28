@@ -3,8 +3,6 @@
 > **当 AI Agent 拒绝付款时，谁来担责？**  
 > X-Gate 给你答案：Pay 和 Skip **都写链上** —— 让每一个 0.001 USDC 的决策有据可查。
 
-
-
 **🎯 [Live Demo](https://x-gate.vercel.app/dashboard)** · **📊 [Basescan 链上证明](https://basescan.org/address/0xA1D71Fa6929D9f0605De6548f00c281a2EB40d6E)** · **🏪 [CROO Agent Store](https://agent.croo.network)**
 
 ---
@@ -231,11 +229,11 @@ Agent 批量调外部 API 成为常态；Agent Store 让「雇佣专用 Agent」
 **竞争差异：**
 
 
-| 维度          | X-Gate                     | 常见 CAP demo       |
-| ----------- | -------------------------- | ----------------- |
-| **Skip 处理** | deliver + 链上 `skip|reason` | 仅本地日志 / 无 deliver |
-| **定位**      | 运行时 spending policy        | 工具链 / scaffold    |
-| **验证**      | 双 TX 样本 + Dashboard 三 Tab  | 仅终端日志             |
+| 维度          | X-Gate                    | 常见 CAP demo    |
+| ----------- | ------------------------- | -------------- |
+| **Skip 处理** | deliver + 链上 `skip        | reason`        |
+| **定位**      | 运行时 spending policy       | 工具链 / scaffold |
+| **验证**      | 双 TX 样本 + Dashboard 三 Tab | 仅终端日志          |
 
 
 ---
@@ -276,13 +274,13 @@ Agent 批量调外部 API 成为常态；Agent Store 让「雇佣专用 Agent」
 ### 核心资源
 
 
-| 资源                    | 链接                                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------------- |
-| **Live Demo**         | [x-gate.vercel.app](https://x-gate.vercel.app/)                                                               |
-| **Dashboard**         | [x-gate.vercel.app/dashboard](https://x-gate.vercel.app/dashboard)                                            |
-| **PaymentReceipt 合约** | `[0xA1D7…40d6E` ↗](https://basescan.org/address/0xA1D71Fa6929D9f0605De6548f00c281a2EB40d6E)                   |
-| **Pay TX 样本**         | `[0x2d91…ee28` ↗](https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28) |
-| **Skip TX 样本**        | `[0x8778…0d23` ↗](https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23) |
+| 资源                    | 链接                                                                                                                                                                                                          |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Live Demo**         | [x-gate.vercel.app](https://x-gate.vercel.app/)                                                                                                                                                             |
+| **Dashboard**         | [x-gate.vercel.app/dashboard](https://x-gate.vercel.app/dashboard)                                                                                                                                          |
+| **PaymentReceipt 合约** | `[0xA1D7…40d6E` ↗]([https://basescan.org/address/0xA1D71Fa6929D9f0605De6548f00c281a2EB40d6E](https://basescan.org/address/0xA1D71Fa6929D9f0605De6548f00c281a2EB40d6E))                                      |
+| **Pay TX 样本**         | `[0x2d91…ee28` ↗]([https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28](https://basescan.org/tx/0x2d910c72213c10d8e5f0c3dfd790d083836f25adeb4206bc517d7400be78ee28)) |
+| **Skip TX 样本**        | `[0x8778…0d23` ↗]([https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23](https://basescan.org/tx/0x8778474d9cb940226bca2b60a7822aed24dbc2403276ba2187f15cf5f2380d23)) |
 
 
 ### 生态链接
@@ -313,12 +311,9 @@ Agent 批量调外部 API 成为常态；Agent Store 让「雇佣专用 Agent」
 ## 📬 Contact & License
 
 **Contact：** GitHub Issues · DoraHacks **X-Gate Policy Agent**  
-**License：** MIT · stub 默认 · **非生产就绪**
+**License：** MIT © 2026 [rgtanga]
 
 ---
 
-
-
 **Built for CROO Agent Hackathon**  
 [DoraHacks BUIDL](https://dorahacks.io/hackathon/croo-hackathon/buidl) · 2026
-
