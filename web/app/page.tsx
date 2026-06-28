@@ -9,7 +9,7 @@ import {
 import Link from "next/link";
 
 import { DashboardCard } from "./dashboard/dashboard-ui";
-import { getExplorerUrl } from "@/lib/chain";
+import { getExplorerUrl, getNetworkLabel } from "@/lib/chain";
 
 const AGENT_STORE = "https://agent.croo.network";
 const HACKATHON =
@@ -18,6 +18,7 @@ const CONTRACT =
   process.env.NEXT_PUBLIC_CONTRACT_ADDRESS ??
   "0x2d29bFa1bd917CB38D9CE796BE40073B080AAbB0";
 const EXPLORER = getExplorerUrl();
+const CHAIN_LABEL = getNetworkLabel();
 const GITHUB = process.env.NEXT_PUBLIC_GITHUB_URL ?? "";
 
 /** [v3] CAP lifecycle — primary hackathon narrative */
@@ -54,7 +55,7 @@ const TAGS = [
   "A2A Agent",
   "On-chain Audit",
   "LLM Policy",
-  "Base Sepolia",
+  CHAIN_LABEL,
   "x402-inspired",
 ] as const;
 
@@ -92,7 +93,8 @@ export default function LandingPage() {
 
         {/* [v3] hero — CAP Provider first */}
         <section className="rounded-lg border border-slate-800 bg-slate-900/50 p-6 text-center">
-          <p className="mb-4 inline-block rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs text-indigo-300">
+          {/* [v2] badge — indigo-400 text for consistency */}
+          <p className="mb-4 inline-block rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs text-indigo-400">
             CROO Agent Hackathon · CAP Provider on Agent Store
           </p>
           <h1 className="text-2xl font-bold text-white mb-4">
@@ -103,11 +105,11 @@ export default function LandingPage() {
           </h1>
           <p className="mx-auto max-w-2xl text-sm text-slate-400 leading-relaxed mb-6">
             Requester 通过 CROO CAP 雇佣 X-Gate Policy Agent。Provider 用 LLM
-            按预算、频率、意图决策；无论 pay 或 skip，均 deliver 结果并写 Base
-            Sepolia receipt。
+            按预算、频率、意图决策；无论 pay 或 skip，均 deliver 结果并写 {CHAIN_LABEL}{" "}
+            receipt。
           </p>
           <p className="mx-auto max-w-2xl text-xs text-slate-500 mb-6">
-            @croo-network/sdk · PaymentReceipt on Base Sepolia ·
+            @croo-network/sdk · PaymentReceipt on {CHAIN_LABEL} ·
             x402-inspired HTTP gateway（执行层）
           </p>
           <div className="flex flex-wrap justify-center gap-3">
@@ -303,7 +305,7 @@ export default function LandingPage() {
             Payment execution uses an x402-inspired HTTP 402 gateway (stub/live
             USDC). Standard x402 facilitator / EIP-3009 settle — roadmap.
           </p>
-          <p>X-Gate · Base Sepolia · CROO CAP · @croo-network/sdk</p>
+          <p>X-Gate · {CHAIN_LABEL} · CROO CAP · @croo-network/sdk</p>
         </footer>
       </div>
     </main>

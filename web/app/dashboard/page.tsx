@@ -6,11 +6,13 @@ import { useState } from "react";
 import AuditPanel from "./audit-panel";
 import CapPanel from "./cap-panel";
 import LivePanel from "./live-panel";
+import { getNetworkLabel } from "@/lib/chain";
 
 type Tab = "live" | "audit" | "cap";
 
 export default function DashboardPage() {
   const [tab, setTab] = useState<Tab>("live");
+  const chainLabel = getNetworkLabel();
 
   return (
     // [v2] slate-950 shell, max-w-7xl container
@@ -65,7 +67,7 @@ export default function DashboardPage() {
 
         {/* [v2] footer — text-xs label tier only */}
         <footer className="text-xs text-center text-slate-500 pb-2">
-          X-Gate · Base Sepolia · x402
+          X-Gate · {chainLabel} · x402
         </footer>
       </div>
     </main>

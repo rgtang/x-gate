@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
+
+import { getNetworkLabel } from "@/lib/chain";
 import "./globals.css";
 
 const mono = JetBrains_Mono({
@@ -10,8 +12,7 @@ const mono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "X-Gate // On-Chain API Gateway",
-  description:
-    "AI×Web3 hackathon — HTTP micropayment gateway using x402 protocol on Base Sepolia",
+  description: `AI×Web3 hackathon — HTTP micropayment gateway using x402 protocol on ${getNetworkLabel()}`,
 };
 
 export default function RootLayout({

@@ -79,10 +79,10 @@ flowchart LR
 ## 📹 Demo & Quick Start
 
 
-| 资源            | 状态                                                       |
-| ------------- | -------------------------------------------------------- |
-| **Live Demo** | [x-gate.vercel.app](https://x-gate.vercel.app/dashboard) |
-| **Demo 视频**   | *录制中 · [脚本在此](docs/demo-script.md)*                      |
+| 资源            | 状态                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| **Live Demo** | [x-gate.vercel.app](https://x-gate.vercel.app/dashboard)                                   |
+| **Demo 视频**   | [https://www.youtube.com/watch?v=3FjqHpVtEpM](https://www.youtube.com/watch?v=3FjqHpVtEpM) |
 
 
 ### 5 分钟本地跑通
