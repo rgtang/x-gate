@@ -1,5 +1,36 @@
 [
   {
+    "id": "6b74ea9e-706d-44e8-9486-016de2367bea",
+    "orderId": "6b74ea9e-706d-44e8-9486-016de2367bea",
+    "negotiationId": "764cf315-c529-4a23-9727-9f33666d488a",
+    "serviceId": "aeaad5fd-4390-477d-b0d7-a146732f5da8",
+    "status": "completed",
+    "action": "pay",
+    "reason": "Fetching real-time ETH spot price for portfolio rebalance before market open is a clear business need, the target API matches the intent, and all rules (budget, rate limit, cooldown, price cap) pass.",
+    "scenarioName": "high-value-first-call",
+    "requirementsSummary": "Fetch ETH spot price for portfolio rebalance before market open",
+    "createdAt": 1783500638531,
+    "updatedAt": 1783500662718,
+    "receiptTx": "0xe97010ec83d7cb0a3437e77f79433d184ca2364f30a4fb05a448f7f8d968a4d8",
+    "capDeliverTx": "0x50b00f3da0bfead7821a061e4861ce1a3d56ee154c52e53bf13a64de6a7cfe57",
+    "httpStatus": 200,
+    "delivery": {
+      "source": "x-gate-policy-agent",
+      "capOrderId": "6b74ea9e-706d-44e8-9486-016de2367bea",
+      "negotiationId": "764cf315-c529-4a23-9727-9f33666d488a",
+      "action": "pay",
+      "reason": "Fetching real-time ETH spot price for portfolio rebalance before market open is a clear business need, the target API matches the intent, and all rules (budget, rate limit, cooldown, price cap) pass.",
+      "httpStatus": 200,
+      "gatewaySuccess": true,
+      "receiptTx": "0xe97010ec83d7cb0a3437e77f79433d184ca2364f30a4fb05a448f7f8d968a4d8",
+      "capDeliverTx": null,
+      "intent": "Fetch ETH spot price for portfolio rebalance before market open",
+      "target": "http://localhost:8412/api/market/eth-price",
+      "scenarioName": "high-value-first-call",
+      "elapsedMs": 13321
+    }
+  },
+  {
     "id": "4b194080-c1ba-4506-974b-7ad82449d7c1",
     "orderId": "4b194080-c1ba-4506-974b-7ad82449d7c1",
     "negotiationId": "74fe1392-7d3e-47b5-a239-e21c665df794",

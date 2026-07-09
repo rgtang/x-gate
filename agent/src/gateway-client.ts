@@ -1,4 +1,5 @@
 import * as http from "node:http";
+import * as https from "node:https";
 import { URL } from "node:url";
 
 import { transferUsdc } from "./usdc-pay";
@@ -45,8 +46,11 @@ function requestOnce(
   };
   if (paymentHeader) headers["x-payment"] = paymentHeader;
 
+  const requestFn =
+    parsed.protocol === "https:" ? https.request : http.request;
+
   return new Promise((resolve) => {
-    const req = http.request(
+    const req = requestFn(
       {
         hostname: parsed.hostname,
         port,
