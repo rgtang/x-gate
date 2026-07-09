@@ -63,6 +63,37 @@ flowchart LR
 
 ---
 
+## Industry Context: x402 & the Agent-First Web
+
+In July 2026, [Cloudflare announced the Monetization Gateway](https://blog.cloudflare.com/monetization-gateway/) — x402 micropayments at the edge for APIs, datasets, and MCP tools. That validates the shift from subscriptions to **per-request agent commerce**: stablecoin settlement, HTTP 402 as the price signal, and **payment as credential** (no signup or API key required).
+
+**Cloudflare answers:** *"How do I charge for my API?"*  
+**X-Gate answers:** *"How does an autonomous agent decide whether to pay, consume the resource, and prove what it did?"*
+
+| Layer | Cloudflare Monetization Gateway | X-Gate |
+| --- | --- | --- |
+| **Protocol** | x402 (402 → pay → retry with proof) | Same x402-inspired flow |
+| **Role** | Seller-side edge enforcement | **Buyer-side policy agent** + CAP orchestration |
+| **Deployment** | Cloudflare global network (waitlist) | Self-hosted gateway (Railway, local, etc.) |
+| **Agent intelligence** | Assumes the buyer pays when priced | **LLM pay/skip** under budget, rate limits, intent rules |
+| **Order flow** | Single HTTP transaction | **CROO CAP:** negotiate → pay → policy → deliver |
+| **Audit** | Platform verification | **On-chain PaymentReceipt** for pay **and** skip |
+
+```text
+┌─────────────────────────────────────────┐
+│  CROO CAP (agent marketplace)           │  ← X-Gate
+│  negotiate → payOrder → deliver         │
+├─────────────────────────────────────────┤
+│  Policy Agent (LLM pay / skip)          │  ← X-Gate
+├─────────────────────────────────────────┤
+│  x402 Gateway (402 / verify / serve)    │  ← Cloudflare MG · X-Gate gateway
+└─────────────────────────────────────────┘
+```
+
+We are not competing with CDN-scale infrastructure. X-Gate is an **open, composable reference stack** for the layer above x402: policy, CAP delivery, and Basescan-auditable decisions. Today's self-hosted gateway is a demo slice; the **policy + receipt layer stays the same** if the execution layer moves to Cloudflare (or any x402 gateway) later.
+
+---
+
 ## Run It in 5 Minutes
 
 | Asset | Link |
@@ -198,7 +229,7 @@ Constraints: [docs/architecture.md#设计约束](docs/architecture.md#设计约�
 | **Role** | Runtime spending policy agent | Scaffold / tooling |
 | **Proof** | 2 TX samples + 3-tab dashboard | Terminal output |
 
-**Timing:** Agents already batch-call paid APIs. Agent Store makes “hire a specialist” real. x402-style gateways make per-call HTTP pay possible — **CAP still lacks a policy + receipt bundle.** X-Gate ships that bundle.
+**Timing:** Cloudflare's Monetization Gateway (Jul 2026) confirms x402 is productizing. Agents already batch-call paid APIs; Agent Store makes “hire a specialist” real. **CAP still lacks a policy + receipt bundle** sitting above any x402 gateway — X-Gate ships that bundle.
 
 ---
 
@@ -242,6 +273,7 @@ Constraints: [docs/architecture.md#设计约束](docs/architecture.md#设计约�
 | CROO Protocol | [croo.network](https://croo.network) |
 | Base Explorer | [basescan.org](https://basescan.org/) |
 | x402 | [x402.org](https://www.x402.org/) |
+| Cloudflare Monetization Gateway | [blog announcement ↗](https://blog.cloudflare.com/monetization-gateway/) |
 | DoraHacks BUIDL | [croo-hackathon/buidl](https://dorahacks.io/hackathon/croo-hackathon/buidl) |
 
 **Docs:** [docs/README.md](docs/README.md) · [setup](docs/setup.md) · [env](docs/env-reference.md) · [demo script](docs/demo-script.md)

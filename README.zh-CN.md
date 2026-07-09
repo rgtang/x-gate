@@ -76,6 +76,37 @@ flowchart LR
 
 ---
 
+## 🌐 行业背景：x402 进入主流
+
+2026 年 7 月，[Cloudflare 发布 Monetization Gateway](https://blog.cloudflare.com/monetization-gateway/) —— 在边缘用 **x402** 对 API、数据集、MCP 工具按次收费，stablecoin 结算、HTTP 402 报价、**付款即凭证**（无需 signup / API key）。这说明 **Agent 按请求付费** 已从概念进入产品化阶段。
+
+**Cloudflare 回答的是：** *「卖家怎么对 API 收费？」*  
+**X-Gate 回答的是：** *「自主 Agent 什么时候该付、付完怎么交付、怎么链上证明？」*
+
+| 层级 | Cloudflare Monetization Gateway | X-Gate |
+| --- | --- | --- |
+| **协议** | x402（402 → 付 → 带 proof 重试） | 同款 x402-inspired 流程 |
+| **角色** | 卖家侧边缘 enforcement | **买家侧 Policy Agent** + CAP 编排 |
+| **部署** | Cloudflare 全球网络（waitlist） | 自托管 gateway（Railway、本地等） |
+| **Agent 智能** | 假设买家按价即付 | **LLM pay/skip** + 预算 / 限流 / 意图规则 |
+| **订单流** | 单次 HTTP 交易 | **CROO CAP：** negotiate → pay → policy → deliver |
+| **审计** | 平台侧验证 | **链上 PaymentReceipt**（pay **和** skip 都记） |
+
+```text
+┌─────────────────────────────────────────┐
+│  CROO CAP（Agent 服务市场）              │  ← X-Gate
+│  negotiate → payOrder → deliver         │
+├─────────────────────────────────────────┤
+│  Policy Agent（LLM 决定 pay / skip）     │  ← X-Gate
+├─────────────────────────────────────────┤
+│  x402 Gateway（402 / 验款 / 放行）       │  ← Cloudflare MG · X-Gate gateway
+└─────────────────────────────────────────┘
+```
+
+我们不是和 CDN 级基础设施正面竞争。X-Gate 是 x402 **之上** 的一层：**开放、可组合的全栈参考实现** —— Policy、CAP 交付、Basescan 可审计决策。当前自托管 gateway 是 demo slice；执行层未来换成 Cloudflare（或任意 x402 gateway）时，**Policy + Receipt 层不变**。
+
+---
+
 ## 📹 Demo & Quick Start
 
 
@@ -224,7 +255,7 @@ sequenceDiagram
 ## 🚀 Why Now · Why Us
 
 **市场时机：**  
-Agent 批量调外部 API 成为常态；Agent Store 让「雇佣专用 Agent」可行。x402-inspired 网关让按次 HTTP 付费可能，**但缺与 CAP 订单绑定的 Policy + Receipt 标准件。**
+Cloudflare Monetization Gateway（2026-07）印证 x402 正在产品化。Agent 批量调外部 API 成为常态；Agent Store 让「雇佣专用 Agent」可行。**任意 x402 gateway 之上仍缺与 CAP 订单绑定的 Policy + Receipt 标准件** —— X-Gate 交付这一层。
 
 **竞争差异：**
 
@@ -292,6 +323,7 @@ Agent 批量调外部 API 成为常态；Agent Store 让「雇佣专用 Agent」
 | CROO Protocol    | [croo.network](https://croo.network)                                        |
 | Base Explorer    | [basescan.org](https://basescan.org/)                                       |
 | x402 Standard    | [x402.org](https://www.x402.org/)                                           |
+| Cloudflare Monetization Gateway | [官方公告 ↗](https://blog.cloudflare.com/monetization-gateway/) |
 | DoraHacks BUIDL  | [croo-hackathon/buidl](https://dorahacks.io/hackathon/croo-hackathon/buidl) |
 
 

@@ -1,5 +1,36 @@
 [
   {
+    "id": "d95bb304-9421-420a-9ded-a75bbb9b9d65",
+    "orderId": "d95bb304-9421-420a-9ded-a75bbb9b9d65",
+    "negotiationId": "3aa62988-a1cc-4c49-b33a-1cf21c7953c3",
+    "serviceId": "a5bb4002-0176-45f3-a2c9-9309c88147fa",
+    "status": "completed",
+    "action": "pay",
+    "reason": "Fetching real-time ETH spot price for portfolio rebalance before market open has clear business value. All checks pass: budget sufficient (0.5 USDC remaining), within rate limit, no cooldown, price (1000 base units) under cap (10000), and intent matches target API.",
+    "scenarioName": "high-value-first-call",
+    "requirementsSummary": "Fetch ETH spot price for portfolio rebalance before market open",
+    "createdAt": 1783595355690,
+    "updatedAt": 1783595375017,
+    "receiptTx": "0x7d77e29485bda332cb8feef5e46a854dc2d998f30d09936f7592ebb8102256b7",
+    "capDeliverTx": "0x4d4a47b44df8096a1fa3dfbd51bb0a42fb8ece10640ac8f0ec9822074a1e9e7e",
+    "httpStatus": 200,
+    "delivery": {
+      "source": "x-gate-policy-agent",
+      "capOrderId": "d95bb304-9421-420a-9ded-a75bbb9b9d65",
+      "negotiationId": "3aa62988-a1cc-4c49-b33a-1cf21c7953c3",
+      "action": "pay",
+      "reason": "Fetching real-time ETH spot price for portfolio rebalance before market open has clear business value. All checks pass: budget sufficient (0.5 USDC remaining), within rate limit, no cooldown, price (1000 base units) under cap (10000), and intent matches target API.",
+      "httpStatus": 200,
+      "gatewaySuccess": true,
+      "receiptTx": "0x7d77e29485bda332cb8feef5e46a854dc2d998f30d09936f7592ebb8102256b7",
+      "capDeliverTx": null,
+      "intent": "Fetch ETH spot price for portfolio rebalance before market open",
+      "target": "http://localhost:8412/api/market/eth-price",
+      "scenarioName": "high-value-first-call",
+      "elapsedMs": 10003
+    }
+  },
+  {
     "id": "6b74ea9e-706d-44e8-9486-016de2367bea",
     "orderId": "6b74ea9e-706d-44e8-9486-016de2367bea",
     "negotiationId": "764cf315-c529-4a23-9727-9f33666d488a",
