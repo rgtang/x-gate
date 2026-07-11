@@ -113,7 +113,7 @@ flowchart LR
 | 资源            | 状态                                                                                         |
 | ------------- | ------------------------------------------------------------------------------------------ |
 | **Live Demo** | [x-gate.vercel.app](https://x-gate.vercel.app/dashboard)                                   |
-| **Demo 视频**   | [https://www.youtube.com/watch?v=3FjqHpVtEpM](https://www.youtube.com/watch?v=3FjqHpVtEpM) |
+| **Demo 视频**   | [https://www.youtube.com/watch?v=piLHqP_QXmU&t=19s](https://www.youtube.com/watch?v=piLHqP_QXmU&t=19s) |
 
 
 ### 5 分钟本地跑通
